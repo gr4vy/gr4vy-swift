@@ -3,10 +3,10 @@
 Developer-friendly & type-safe Swift SDK specifically catered to leverage *Gr4vy* API.
 
 <div align="left">
-    <img alt="Build Status" src="https://github.com/gr4vy/gr4vy-swift/actions/workflows/ios.yml/badge.svg?branch=main">
     <img alt="Swift" src="https://img.shields.io/badge/Swift-5.7_5.8_5.9-orange?style=for-the-badge">
     <img alt="Platforms" src="https://img.shields.io/badge/Platforms-iOS-yellowgreen?style=for-the-badge">
     <img alt="CocoaPods Compatible" src="https://img.shields.io/cocoapods/v/gr4vy-swift.svg?style=for-the-badge">
+    <img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/gr4vy/gr4vy-swift/ios.yml?branch=main&style=for-the-badge">
 </div>
 
 ## Summary
@@ -17,27 +17,35 @@ The official Gr4vy SDK for Swift provides a convenient way to interact with the 
 
 This SDK is designed to simplify development, reduce boilerplate code, and help you get up and running with Gr4vy quickly and efficiently. It handles authentication, request management, and provides easy-to-use async/await methods for all API endpoints.
 
-<!-- No Summary [summary] -->
+- [Gr4vy Swift SDK](#gr4vy-swift-sdk)
+  - [Summary](#summary)
+  - [SDK Installation](#sdk-installation)
+    - [Getting started](#getting-started)
+    - [Minimum Requirements](#minimum-requirements)
+    - [Swift Package Manager](#swift-package-manager)
+    - [CocoaPods](#cocoapods)
+  - [SDK Example Usage](#sdk-example-usage)
+    - [Example](#example)
+  - [Merchant account ID selection](#merchant-account-id-selection)
+  - [Timeout Configuration](#timeout-configuration)
+    - [SDK-Level Timeout](#sdk-level-timeout)
+    - [Per-Request Timeout](#per-request-timeout)
+    - [Default Timeout Values](#default-timeout-values)
+  - [Usage Examples](#usage-examples)
+    - [Vault card details](#vault-card-details)
+    - [List available payment options](#list-available-payment-options)
+    - [Get card details](#get-card-details)
+    - [List buyer's payment methods](#list-buyers-payment-methods)
+  - [Error Handling](#error-handling)
+    - [Example](#example-1)
+  - [Server Selection](#server-selection)
+    - [Select Server by Name](#select-server-by-name)
+  - [Debugging](#debugging)
+    - [Debug Mode](#debug-mode)
+  - [Support](#support)
+  - [License](#license)
 
-<!-- Start Table of Contents [toc] -->
-## Table of Contents
-<!-- $toc-max-depth=2 -->
-* [Gr4vy Swift SDK](#gr4vy-swift-sdk)
-  * [SDK Installation](#sdk-installation)
-  * [SDK Example Usage](#sdk-example-usage)
-  * [Merchant account ID selection](#merchant-account-id-selection)
-  * [Timeout Configuration](#timeout-configuration)
-  * [Error Handling](#error-handling)
-  * [Server Selection](#server-selection)
-  * [Debugging](#debugging)
-* [Development](#development)
-  * [Testing](#testing)
-  * [Migration from UI SDK](#migration-from-ui-sdk)
-  * [Contributions](#contributions)
 
-<!-- End Table of Contents [toc] -->
-
-<!-- Start SDK Installation [installation] -->
 ## SDK Installation
 
 ### Getting started
@@ -198,11 +206,50 @@ let buyersRequest = Gr4vyBuyersPaymentMethodsRequest(
 
 > **Note**: Timeout values are specified in seconds as `TimeInterval` (Double). 
 
-<!-- No SDK Example Usage [usage] -->
+## Usage Examples
 
-### Usage Examples
+### Vault card details
 
-#### Payment Options Service
+Stores the card details you collected into a Gr4vy checkout session.
+
+```swift
+// Create card data
+let cardData = Gr4vyCardData(
+    paymentMethod: .card(CardPaymentMethod(
+        number: "4111111111111111",
+        expirationDate: "12/25",
+        securityCode: "123"
+    ))
+)
+
+// Tokenize card data into checkout session
+do {
+    try await gr4vy.tokenize(
+        checkoutSessionId: "session_123",
+        cardData: cardData
+    )
+    print("Payment method tokenized successfully")
+} catch {
+    print("Error tokenizing payment method: \(error)")
+}
+
+// Completion handler
+gr4vy.tokenize(
+    checkoutSessionId: "session_123",
+    cardData: cardData
+) { result in
+    switch result {
+    case .success:
+        print("Payment method tokenized successfully")
+    case .failure(let error):
+        print("Error tokenizing payment method: \(error)")
+    }
+}
+```
+
+### List available payment options
+
+List the available payment options that can be presented at checkout.
 
 ```swift
 // Create request
@@ -235,7 +282,9 @@ gr4vy.paymentOptions.list(request: request) { result in
 }
 ```
 
-#### Card Details Service
+### Get card details
+
+Get details about a particular card based on it's BIN, the checkout country/currency, and more.
 
 ```swift
 // Create card details object
@@ -274,7 +323,9 @@ gr4vy.cardDetails.get(request: request) { result in
 }
 ```
 
-#### Buyers Payment Methods Service
+### List buyer's payment methods
+
+List all the sotred payment methods for a buyer, filtered by the checkout's currency and country.
 
 ```swift
 // Create payment methods criteria
@@ -313,43 +364,6 @@ gr4vy.paymentMethods.list(request: request) { result in
 }
 ```
 
-#### Checkout Session Service
-
-```swift
-// Create card data
-let cardData = Gr4vyCardData(
-    paymentMethod: .card(CardPaymentMethod(
-        number: "4111111111111111",
-        expirationDate: "12/25",
-        securityCode: "123"
-    ))
-)
-
-// Tokenize payment method
-do {
-    try await gr4vy.tokenize(
-        checkoutSessionId: "session_123",
-        cardData: cardData
-    )
-    print("Payment method tokenized successfully")
-} catch {
-    print("Error tokenizing payment method: \(error)")
-}
-
-// Completion handler
-gr4vy.tokenize(
-    checkoutSessionId: "session_123",
-    cardData: cardData
-) { result in
-    switch result {
-    case .success:
-        print("Payment method tokenized successfully")
-    case .failure(let error):
-        print("Error tokenizing payment method: \(error)")
-    }
-}
-```
-<!-- End Available Services and Operations [operations] -->
 
 <!-- Start Error Handling [errors] -->
 ## Error Handling
