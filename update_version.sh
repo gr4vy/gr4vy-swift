@@ -28,6 +28,9 @@ sed -i '' "s/static let current = \".*\"/static let current = \"$NEW_VERSION\"/"
 sed -i '' "s/XCTAssertTrue(userAgent!.contains(\"Gr4vy-iOS-SDK\/.*\"))/XCTAssertTrue(userAgent!.contains(\"Gr4vy-iOS-SDK\/$NEW_VERSION\"))/" gr4vy-swiftTests/Gr4vySDKTests.swift
 sed -i '' "s/XCTAssertTrue(userAgent.contains(\".*\"), \"User agent should contain version\")/XCTAssertTrue(userAgent.contains(\"$NEW_VERSION\"), \"User agent should contain version\")/" gr4vy-swiftTests/Gr4vySDKTests.swift
 
+# Update testSDKVersion hardcoded version if present
+sed -i '' "s/XCTAssertEqual(Gr4vySDK.version, \".*\")/XCTAssertEqual(Gr4vySDK.version, \"$NEW_VERSION\")/" gr4vy-swiftTests/Gr4vySDKTests.swift
+
 echo "Version updated to $NEW_VERSION successfully!"
 echo ""
 echo "Updated files:"

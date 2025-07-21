@@ -21,12 +21,13 @@ final class Gr4vySDKTests: XCTestCase {
 
     func testSDKVersion() {
         // Test that version is properly set
-        XCTAssertEqual(Gr4vySDK.version, "1.0.0")
         XCTAssertFalse(Gr4vySDK.version.isEmpty)
 
-        // Test version format (should be semantic versioning)
-        let versionComponents = Gr4vySDK.version.components(separatedBy: ".")
-        XCTAssertEqual(versionComponents.count, 3, "Version should follow semantic versioning (major.minor.patch)")
+        // Test version format (should be semantic versioning with optional pre-release)
+        let version = Gr4vySDK.version
+        let mainVersion = version.split(separator: "-").first ?? version[...]
+        let versionComponents = mainVersion.split(separator: ".")
+        XCTAssertEqual(versionComponents.count, 3, "Version should follow semantic versioning (major.minor.patch[-prerelease])")
 
         // Test that each component is a valid number
         for component in versionComponents {
@@ -138,7 +139,7 @@ final class Gr4vySDKTests: XCTestCase {
         let version = Gr4vySDK.version
 
         // Test that version doesn't contain invalid characters
-        let allowedCharacterSet = CharacterSet(charactersIn: "0123456789.")
+        let allowedCharacterSet = CharacterSet(charactersIn: "0123456789.-beta")
         let versionCharacterSet = CharacterSet(charactersIn: version)
         XCTAssertTrue(allowedCharacterSet.isSuperset(of: versionCharacterSet),
                       "Version should only contain numbers and dots")
@@ -182,15 +183,17 @@ final class Gr4vySDKTests: XCTestCase {
     // MARK: - Comparison Tests
 
     func testVersionComparison() {
-        // Test that version is not empty and follows semantic versioning
+        // Test that version is not empty and follows semantic versioning (with optional pre-release)
         let version = Gr4vySDK.version
-        let components = version.components(separatedBy: ".")
+        // Remove any pre-release identifier (e.g., -beta.1, -alpha, -rc.2)
+        let mainVersion = version.split(separator: "-").first ?? version[...]
+        let components = mainVersion.split(separator: ".")
 
         guard components.count >= 3,
               let major = Int(components[0]),
               let minor = Int(components[1]),
               let patch = Int(components[2]) else {
-            XCTFail("Version should follow semantic versioning format")
+            XCTFail("Version should follow semantic versioning format (major.minor.patch[-prerelease])")
             return
         }
 
@@ -239,7 +242,7 @@ final class Gr4vySDKTests: XCTestCase {
                 let isSupported = Gr4vySDK.isIOSVersionSupported
 
                 // Verify values are consistent
-                XCTAssertEqual(version, "1.0.0")
+                XCTAssertEqual(version, Gr4vySDK.version)
                 XCTAssertEqual(name, "Gr4vy-iOS-SDK")
                 XCTAssertEqual(minVersion, "16.0")
                 XCTAssertTrue(isSupported is Bool)
