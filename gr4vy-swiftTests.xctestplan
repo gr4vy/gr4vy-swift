@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "F6A30573-254B-4F5B-9867-E891AEA0F7B1",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:gr4vy-swift.xcodeproj",
+        "identifier" : "5978B28E271C7F1400F5CC00",
+        "name" : "gr4vy-swiftTests"
+      }
+    }
+  ],
+  "version" : 1
+}
