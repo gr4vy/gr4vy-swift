@@ -1,0 +1,264 @@
+name: PR Test Coverage
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test-and-coverage:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Select Xcode version
+      run: sudo xcode-select -s /Applications/Xcode_15.0.app/Contents/Developer
+      
+    - name: Show Xcode version
+      run: xcodebuild -version
+      
+    - name: Clean derived data and build artifacts
+      run: |
+        # Remove all derived data
+        rm -rf ~/Library/Developer/Xcode/DerivedData
+        rm -rf ~/Library/Caches/com.apple.dt.Xcode
+        
+        # Clean Xcode build folder for the main scheme only
+        xcodebuild clean -scheme gr4vy-swift -configuration Debug
+        
+        # Clean any remaining build artifacts
+        find . -name "*.build" -type d -exec rm -rf {} + 2>/dev/null || true
+        find . -name "*.xcuserdata" -type d -exec rm -rf {} + 2>/dev/null || true
+        
+        # Clean test-specific artifacts
+        find . -name "TestResults.xcresult" -type d -exec rm -rf {} + 2>/dev/null || true
+        find . -name "*.xcresult" -type d -exec rm -rf {} + 2>/dev/null || true
+    
+    - name: Build SDK
+      run: |
+        xcodebuild build \
+          -scheme gr4vy-swift \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+          -configuration Debug \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO
+    
+    - name: Run tests with coverage
+      run: |
+        xcodebuild test \
+          -scheme gr4vy-swiftTests \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+          -configuration Debug \
+          -enableCodeCoverage YES \
+          -resultBundlePath TestResults.xcresult \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO
+    
+    - name: Generate coverage report
+      run: |
+        # Generate detailed coverage report
+        xcrun xccov view --report TestResults.xcresult > coverage-report.txt
+        
+        # Generate summary coverage report
+        xcrun xccov view --report --only-targets TestResults.xcresult > coverage-summary.txt
+        
+        # Extract framework coverage percentage
+        FRAMEWORK_COVERAGE=$(xcrun xccov view --report --only-targets TestResults.xcresult | grep "gr4vy_swift.framework" | awk '{print $3}' | sed 's/[()%]//g')
+        
+        # Extract test suite coverage percentage
+        TEST_COVERAGE=$(xcrun xccov view --report --only-targets TestResults.xcresult | grep "gr4vy-swiftTests.xctest" | awk '{print $3}' | sed 's/[()%]//g')
+        
+        # Extract total test count
+        TOTAL_TESTS=$(xcrun xccov view --report TestResults.xcresult | grep -E "Executed [0-9]+ tests" | head -1 | awk '{print $2}')
+        
+        # Extract failed test count
+        FAILED_TESTS=$(xcrun xccov view --report TestResults.xcresult | grep -E "with [0-9]+ failures" | head -1 | awk '{print $3}')
+        
+        # Set default values if extraction fails
+        FRAMEWORK_COVERAGE=${FRAMEWORK_COVERAGE:-"0.00"}
+        TEST_COVERAGE=${TEST_COVERAGE:-"0.00"}
+        TOTAL_TESTS=${TOTAL_TESTS:-"0"}
+        FAILED_TESTS=${FAILED_TESTS:-"0"}
+        
+        echo "FRAMEWORK_COVERAGE=$FRAMEWORK_COVERAGE" >> $GITHUB_ENV
+        echo "TEST_COVERAGE=$TEST_COVERAGE" >> $GITHUB_ENV
+        echo "TOTAL_TESTS=$TOTAL_TESTS" >> $GITHUB_ENV
+        echo "FAILED_TESTS=$FAILED_TESTS" >> $GITHUB_ENV
+        
+        # Create coverage badge color based on coverage percentage
+        if (( $(echo "$FRAMEWORK_COVERAGE > 80" | bc -l) )); then
+          echo "COVERAGE_COLOR=brightgreen" >> $GITHUB_ENV
+        elif (( $(echo "$FRAMEWORK_COVERAGE > 60" | bc -l) )); then
+          echo "COVERAGE_COLOR=yellow" >> $GITHUB_ENV
+        elif (( $(echo "$FRAMEWORK_COVERAGE > 40" | bc -l) )); then
+          echo "COVERAGE_COLOR=orange" >> $GITHUB_ENV
+        else
+          echo "COVERAGE_COLOR=red" >> $GITHUB_ENV
+        fi
+    
+    - name: Generate coverage JSON for detailed report
+      run: |
+        # Generate JSON coverage report for file-level details
+        xcrun xccov view --report --json TestResults.xcresult > coverage.json
+        
+        # Extract top files with lowest coverage (for improvement suggestions)
+        python3 -c "
+        import json
+        import sys
+        
+        with open('coverage.json', 'r') as f:
+            data = json.load(f)
+        
+        def extract_files(targets):
+            files = []
+            for target in targets:
+                if 'files' in target:
+                    for file in target['files']:
+                        if 'gr4vy-swift' in file.get('path', ''):
+                            coverage = file.get('lineCoverage', 0) * 100
+                            files.append({
+                                'name': file.get('name', 'Unknown'),
+                                'coverage': coverage,
+                                'path': file.get('path', '')
+                            })
+            return files
+        
+        files = extract_files(data.get('targets', []))
+        files.sort(key=lambda x: x['coverage'])
+        
+        # Get lowest coverage files (bottom 5)
+        low_coverage = files[:5]
+        
+        print('LOW_COVERAGE_FILES<<EOF')
+        for file in low_coverage:
+            print(f\"- {file['name']}: {file['coverage']:.1f}%\")
+        print('EOF')
+        " >> $GITHUB_ENV
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results
+        path: |
+          TestResults.xcresult
+          coverage-report.txt
+          coverage-summary.txt
+          coverage.json
+    
+    - name: Comment PR with coverage results
+      uses: actions/github-script@v6
+      if: always()
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          
+          // Read coverage summary
+          let coverageSummary = '';
+          try {
+            coverageSummary = fs.readFileSync('coverage-summary.txt', 'utf8');
+          } catch (e) {
+            coverageSummary = 'Coverage summary not available';
+          }
+          
+          // Determine test status
+          const testStatus = ${{ env.FAILED_TESTS }} === '0' ? '✅ PASSED' : '❌ FAILED';
+          const testStatusIcon = ${{ env.FAILED_TESTS }} === '0' ? '🎉' : '⚠️';
+          
+          // Create coverage badge
+          const coverageBadge = `![Coverage](https://img.shields.io/badge/Coverage-${{ env.FRAMEWORK_COVERAGE }}%25-${{ env.COVERAGE_COLOR }})`;
+          
+          // Create detailed comment
+          const comment = `## ${testStatusIcon} Test Results & Code Coverage Report
+          
+          ${coverageBadge}
+          
+          ### 📊 Test Summary
+          - **Total Tests**: ${{ env.TOTAL_TESTS }}
+          - **Failed Tests**: ${{ env.FAILED_TESTS }}
+          - **Status**: ${testStatus}
+          
+          ### 📈 Coverage Summary
+          - **Framework Coverage**: ${{ env.FRAMEWORK_COVERAGE }}%
+          - **Test Suite Coverage**: ${{ env.TEST_COVERAGE }}%
+          
+          ### 📋 Coverage Details
+          \`\`\`
+          ${coverageSummary}
+          \`\`\`
+          
+          ### 🔍 Files Needing Attention
+          ${process.env.LOW_COVERAGE_FILES || 'All files have good coverage! 🎉'}
+          
+          ### 🎯 Coverage Goals
+          - **Target**: 80%+ framework coverage
+          - **Current**: ${{ env.FRAMEWORK_COVERAGE }}%
+          - **Status**: ${${{ env.FRAMEWORK_COVERAGE }} >= 80 ? '✅ Target met!' : '📈 Room for improvement'}
+          
+          ---
+          
+          <details>
+          <summary>🔧 How to improve coverage</summary>
+          
+          1. **Add unit tests** for files with low coverage
+          2. **Test edge cases** and error scenarios
+          3. **Mock external dependencies** for better isolation
+          4. **Add integration tests** for service interactions
+          5. **Test async/await patterns** thoroughly
+          
+          Run locally with:
+          \`\`\`bash
+          xcodebuild test -scheme gr4vy-swiftTests -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' -enableCodeCoverage YES
+          xcrun xccov view --report TestResults.xcresult --only-targets
+          \`\`\`
+          </details>
+          
+          ---
+          *Generated by GitHub Actions on ${new Date().toISOString()}*
+          `;
+          
+          // Post comment
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+    
+    - name: Set status check
+      uses: actions/github-script@v6
+      if: always()
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const state = ${{ env.FAILED_TESTS }} === '0' ? 'success' : 'failure';
+          const description = `Tests: ${{ env.TOTAL_TESTS }} total, ${{ env.FAILED_TESTS }} failed. Coverage: ${{ env.FRAMEWORK_COVERAGE }}%`;
+          
+          github.rest.repos.createCommitStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            sha: context.sha,
+            state: state,
+            target_url: `${context.payload.repository.html_url}/actions/runs/${context.runId}`,
+            description: description,
+            context: 'test-coverage'
+          });
+    
+    - name: Fail if coverage is below threshold
+      run: |
+        THRESHOLD=70
+        if (( $(echo "${{ env.FRAMEWORK_COVERAGE }} < $THRESHOLD" | bc -l) )); then
+          echo "❌ Coverage ${{ env.FRAMEWORK_COVERAGE }}% is below threshold of ${THRESHOLD}%"
+          exit 1
+        else
+          echo "✅ Coverage ${{ env.FRAMEWORK_COVERAGE }}% meets threshold of ${THRESHOLD}%"
+        fi
+    
+    - name: Fail if tests failed
+      if: env.FAILED_TESTS != '0'
+      run: |
+        echo "❌ ${{ env.FAILED_TESTS }} tests failed"
+        exit 1 
