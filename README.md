@@ -57,7 +57,7 @@ Add the following to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.0.0")
+    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.0.0-beta.1")
 ]
 ```
 
@@ -66,7 +66,7 @@ dependencies: [
 Add the following to your `Podfile`:
 
 ```ruby
-pod 'gr4vy-swift', '~> 1.0.0'
+pod 'gr4vy-swift', '~> 1.0.0-beta.1'
 ```
 
 Then run:
