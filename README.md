@@ -27,7 +27,6 @@ This SDK is designed to simplify development, reduce boilerplate code, and help 
   * [SDK Example Usage](#sdk-example-usage)
   * [Merchant account ID selection](#merchant-account-id-selection)
   * [Timeout Configuration](#timeout-configuration)
-  * [Available Services and Operations](#available-services-and-operations)
   * [Error Handling](#error-handling)
   * [Server Selection](#server-selection)
   * [Debugging](#debugging)
