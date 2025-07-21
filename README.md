@@ -9,41 +9,37 @@ Developer-friendly & type-safe Swift SDK specifically catered to leverage *Gr4vy
     <img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/gr4vy/gr4vy-swift/ios.yml?branch=main&style=for-the-badge">
 </div>
 
-## Summary
-
-Gr4vy Swift SDK
+## Summary <!-- omit from toc -->
 
 The official Gr4vy SDK for Swift provides a convenient way to interact with the Gr4vy API from your iOS application. This SDK allows you to seamlessly integrate Gr4vy's powerful payment orchestration capabilities.
 
 This SDK is designed to simplify development, reduce boilerplate code, and help you get up and running with Gr4vy quickly and efficiently. It handles authentication, request management, and provides easy-to-use async/await methods for all API endpoints.
 
-- [Gr4vy Swift SDK](#gr4vy-swift-sdk)
-  - [Summary](#summary)
-  - [SDK Installation](#sdk-installation)
-    - [Getting started](#getting-started)
-    - [Minimum Requirements](#minimum-requirements)
-    - [Swift Package Manager](#swift-package-manager)
-    - [CocoaPods](#cocoapods)
-  - [SDK Example Usage](#sdk-example-usage)
-    - [Example](#example)
-  - [Merchant account ID selection](#merchant-account-id-selection)
-  - [Timeout Configuration](#timeout-configuration)
-    - [SDK-Level Timeout](#sdk-level-timeout)
-    - [Per-Request Timeout](#per-request-timeout)
-    - [Default Timeout Values](#default-timeout-values)
-  - [Usage Examples](#usage-examples)
-    - [Vault card details](#vault-card-details)
-    - [List available payment options](#list-available-payment-options)
-    - [Get card details](#get-card-details)
-    - [List buyer's payment methods](#list-buyers-payment-methods)
-  - [Error Handling](#error-handling)
-    - [Example](#example-1)
-  - [Server Selection](#server-selection)
-    - [Select Server by Name](#select-server-by-name)
-  - [Debugging](#debugging)
-    - [Debug Mode](#debug-mode)
-  - [Support](#support)
-  - [License](#license)
+- [SDK Installation](#sdk-installation)
+  - [Getting started](#getting-started)
+  - [Minimum Requirements](#minimum-requirements)
+  - [Swift Package Manager](#swift-package-manager)
+  - [CocoaPods](#cocoapods)
+- [SDK Example Usage](#sdk-example-usage)
+  - [Example](#example)
+- [Merchant account ID selection](#merchant-account-id-selection)
+- [Timeout Configuration](#timeout-configuration)
+  - [SDK-Level Timeout](#sdk-level-timeout)
+  - [Per-Request Timeout](#per-request-timeout)
+  - [Default Timeout Values](#default-timeout-values)
+- [Available Operations](#available-operations)
+  - [Vault card details](#vault-card-details)
+  - [List available payment options](#list-available-payment-options)
+  - [Get card details](#get-card-details)
+  - [List buyer's payment methods](#list-buyers-payment-methods)
+- [Error Handling](#error-handling)
+  - [Example](#example-1)
+- [Server Selection](#server-selection)
+  - [Select Server by Name](#select-server-by-name)
+- [Debugging](#debugging)
+  - [Debug Mode](#debug-mode)
+- [Support](#support)
+- [License](#license)
 
 
 ## SDK Installation
@@ -206,7 +202,7 @@ let buyersRequest = Gr4vyBuyersPaymentMethodsRequest(
 
 > **Note**: Timeout values are specified in seconds as `TimeInterval` (Double). 
 
-## Usage Examples
+## Available Operations
 
 ### Vault card details
 
