@@ -15,6 +15,8 @@ The official Gr4vy SDK for Swift provides a convenient way to interact with the 
 
 This SDK is designed to simplify development, reduce boilerplate code, and help you get up and running with Gr4vy quickly and efficiently. It handles authentication, request management, and provides easy-to-use async/await methods for all API endpoints.
 
+A [SwiftUI client app](https://github.com/gr4vy/gr4vy-swift-client-app) and [UIKit client app](https://github.com/gr4vy/gr4vy-uikit-client-app) that uses this SDK are available for demo and testing purposes.
+
 - [SDK Installation](#sdk-installation)
   - [Getting started](#getting-started)
   - [Minimum Requirements](#minimum-requirements)
