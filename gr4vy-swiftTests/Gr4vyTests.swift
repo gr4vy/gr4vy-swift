@@ -411,7 +411,22 @@ final class Gr4vyTests: XCTestCase {
 
     func testTokenizeAsyncMethod() async throws {
         // Given
-        let gr4vy = try Gr4vy(gr4vyId: "test", token: "token", merchantId: "tokenize_merchant", server: .sandbox)
+        let mockSession = MockURLSession()
+        mockSession.mockData = "{}".data(using: .utf8)
+        mockSession.mockResponse = HTTPURLResponse(
+            url: URL(string: "https://api.sandbox.test.gr4vy.app/checkout/sessions/session_123/fields")!,
+            statusCode: 200,
+            httpVersion: nil,
+            headerFields: nil
+        )
+        
+        let gr4vy = try Gr4vy(
+            gr4vyId: "test",
+            token: "token",
+            merchantId: "tokenize_merchant",
+            server: .sandbox,
+            session: mockSession
+        )
         let checkoutSessionId = "session_123"
         let cardData = Gr4vyCardData(paymentMethod: .card(.init(
             number: "4111111111111111",
@@ -419,20 +434,33 @@ final class Gr4vyTests: XCTestCase {
             securityCode: "123"
         )))
 
-        // Note: This will likely fail in actual execution because we don't have a real backend
-        // But we're testing that the method exists and can be called
-        do {
-            try await gr4vy.tokenize(checkoutSessionId: checkoutSessionId, cardData: cardData)
-            // If we get here, the method executed without throwing immediately
-        } catch {
-            // Expected to fail in tests due to no real backend
-            // We're just testing the method signature and that it forwards to the service
-        }
+        // When
+        try await gr4vy.tokenize(checkoutSessionId: checkoutSessionId, cardData: cardData)
+        
+        // Then - Verify request was made
+        XCTAssertNotNil(mockSession.lastRequest)
+        XCTAssertEqual(mockSession.lastRequest?.httpMethod, "PUT")
+        XCTAssertTrue(mockSession.lastRequest?.url?.absoluteString.contains("session_123") == true)
     }
 
     func testTokenizeCompletionMethod() throws {
         // Given
-        let gr4vy = try Gr4vy(gr4vyId: "test", token: "token", merchantId: "completion_merchant", server: .production)
+        let mockSession = MockURLSession()
+        mockSession.mockData = "{}".data(using: .utf8)
+        mockSession.mockResponse = HTTPURLResponse(
+            url: URL(string: "https://api.test.gr4vy.app/checkout/sessions/session_456/fields")!,
+            statusCode: 200,
+            httpVersion: nil,
+            headerFields: nil
+        )
+        
+        let gr4vy = try Gr4vy(
+            gr4vyId: "test",
+            token: "token",
+            merchantId: "completion_merchant",
+            server: .production,
+            session: mockSession
+        )
         let checkoutSessionId = "session_456"
         let cardData = Gr4vyCardData(paymentMethod: .card(.init(
             number: "5555555555554444",
@@ -443,13 +471,23 @@ final class Gr4vyTests: XCTestCase {
         let expectation = XCTestExpectation(description: "Tokenize completion called")
 
         // When
-        gr4vy.tokenize(checkoutSessionId: checkoutSessionId, cardData: cardData) { _ in
-            // Expected to fail in tests, but completion should be called
-            expectation.fulfill()
+        gr4vy.tokenize(checkoutSessionId: checkoutSessionId, cardData: cardData) { result in
+            // Then
+            switch result {
+            case .success:
+                expectation.fulfill()
+            case .failure(let error):
+                XCTFail("Tokenize should succeed with mock session: \(error)")
+            }
         }
 
         // Then
         wait(for: [expectation], timeout: 5.0)
+        
+        // Verify request was made
+        XCTAssertNotNil(mockSession.lastRequest)
+        XCTAssertEqual(mockSession.lastRequest?.httpMethod, "PUT")
+        XCTAssertTrue(mockSession.lastRequest?.url?.absoluteString.contains("session_456") == true)
     }
 
     // MARK: - Edge Cases Tests

@@ -31,9 +31,13 @@ A [SwiftUI client app](https://github.com/gr4vy/gr4vy-swift-client-app) and [UIK
   - [Default Timeout Values](#default-timeout-values)
 - [Available Operations](#available-operations)
   - [Vault card details](#vault-card-details)
+  - [Vault card details with 3D Secure authentication](#vault-card-details-with-3d-secure-authentication)
   - [List available payment options](#list-available-payment-options)
   - [Get card details](#get-card-details)
   - [List buyer's payment methods](#list-buyers-payment-methods)
+- [3D Secure Authentication](#3d-secure-authentication)
+  - [Overview](#overview)
+  - [Customizing the 3DS UI](#customizing-the-3ds-ui)
 - [Error Handling](#error-handling)
   - [Example](#example-1)
 - [Server Selection](#server-selection)
@@ -63,7 +67,7 @@ Add the following to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.0.0-beta.1")
+    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.0.0-beta.2")
 ]
 ```
 
@@ -72,7 +76,7 @@ dependencies: [
 Add the following to your `Podfile`:
 
 ```ruby
-pod 'gr4vy-swift', '~> 1.0.0-beta.1'
+pod 'gr4vy-swift', '~> 1.0.0-beta.2'
 ```
 
 Then run:
@@ -208,7 +212,7 @@ let buyersRequest = Gr4vyBuyersPaymentMethodsRequest(
 
 ### Vault card details
 
-Stores the card details you collected into a Gr4vy checkout session.
+Stores the card details you collected into a Gr4vy checkout session without 3D Secure authentication.
 
 ```swift
 // Create card data
@@ -226,7 +230,7 @@ do {
         checkoutSessionId: "session_123",
         cardData: cardData
     )
-    print("Payment method tokenized successfully")
+    print("Payment method tokenization complete")
 } catch {
     print("Error tokenizing payment method: \(error)")
 }
@@ -238,12 +242,103 @@ gr4vy.tokenize(
 ) { result in
     switch result {
     case .success:
-        print("Payment method tokenized successfully")
+        print("Payment method tokenization complete")
     case .failure(let error):
         print("Error tokenizing payment method: \(error)")
     }
 }
 ```
+
+### Vault card details with 3D Secure authentication
+
+Stores card details with optional 3D Secure authentication. When authentication is enabled, the SDK will automatically handle 3DS Secure flows.
+
+```swift
+// Create card data
+let cardData = Gr4vyCardData(
+    paymentMethod: .card(CardPaymentMethod(
+        number: "4111111111111111",
+        expirationDate: "12/25",
+        securityCode: "123"
+    ))
+)
+
+// Tokenize with 3DS authentication (async/await)
+do {
+    let result = try await gr4vy.tokenize(
+        checkoutSessionId: "session_123",
+        cardData: cardData,
+        sdkMaxTimeoutMinutes: 5,
+        authenticate: true
+    )
+    
+    if result.tokenized {
+        print("Payment method tokenized successfully")
+        
+        // Check authentication details
+        if let auth = result.authentication {
+            print("3DS attempted: \(auth.attempted)")
+            print("Authentication type: \(auth.type ?? "N/A")")
+            print("Transaction status: \(auth.transactionStatus ?? "N/A")")
+            
+            if auth.hasCancelled {
+                print("User cancelled authentication")
+            }
+            if auth.hasTimedOut {
+                print("Authentication timed out")
+            }
+        }
+    }
+} catch {
+    print("Error tokenizing payment method: \(error)")
+}
+
+// With explicit view controller (async/await)
+do {
+    let result = try await gr4vy.tokenize(
+        checkoutSessionId: "session_123",
+        cardData: cardData,
+        viewController: self, // Explicitly provide the presenting view controller
+        sdkMaxTimeoutMinutes: 5,
+        authenticate: true
+    )
+    print("Tokenization complete: \(result.tokenized)")
+} catch {
+    print("Error: \(error)")
+}
+
+// Completion handler variant
+gr4vy.tokenize(
+    checkoutSessionId: "session_123",
+    cardData: cardData,
+    sdkMaxTimeoutMinutes: 5,
+    authenticate: true
+) { result in
+    switch result {
+    case .success(let tokenizeResult):
+        if tokenizeResult.tokenized {
+            print("Payment method tokenized successfully")
+            if let auth = tokenizeResult.authentication {
+                print("Transaction status: \(auth.transactionStatus ?? "N/A")")
+            }
+        }
+    case .failure(let error):
+        print("Error tokenizing payment method: \(error)")
+    }
+}
+```
+
+**Parameters:**
+- `checkoutSessionId`: The checkout session ID from Gr4vy
+- `cardData`: The payment method data to tokenize
+- `viewController`: (Optional) The view controller to present the 3DS challenge. If not provided, the SDK will automatically resolve the topmost view controller
+- `sdkMaxTimeoutMinutes`: Maximum time for 3DS authentication in minutes (default: 5)
+- `authenticate`: This controls if we should attempt to authenticate the card data (default: false)
+- `uiCustomization`: (Optional) UI customization for the 3DS challenge screen
+
+**Returns:** `Gr4vyTokenizeResult` containing:
+- `tokenized`: Boolean indicating if tokenization was successful
+- `authentication`: Optional `Gr4vyAuthentication` object with authentication details
 
 ### List available payment options
 
@@ -362,6 +457,147 @@ gr4vy.paymentMethods.list(request: request) { result in
 }
 ```
 
+## 3D Secure Authentication
+
+### Overview
+
+The SDK provides support for 3D Secure (3DS) authentication, and handles flows automatically. 
+
+**Authentication Flows:**
+
+1. **Frictionless Flow**: Authentication completes in the background without user interaction
+2. **Challenge Flow**: User is presented with an authentication challenge (e.g., entering an OTP code)
+
+**Transaction Status Codes:**
+
+The authentication result includes a transaction status code that indicates the outcome.
+
+### Customizing the 3DS UI
+
+You can customize the appearance of the 3DS challenge screen to match your app's design. The SDK supports separate customizations for light and dark modes.
+
+**Example: Basic Customization**
+
+```swift
+// Create toolbar customization
+let toolbar = Gr4vyThreeDSToolbarCustomization(
+    textColorHex: "#FFFFFF",
+    backgroundColorHex: "#007AFF",
+    headerText: "Secure Verification",
+    buttonText: "Cancel"
+)
+
+// Create button customizations
+let submitButton = Gr4vyThreeDSButtonCustomization(
+    textFontSize: 16,
+    textColorHex: "#FFFFFF",
+    backgroundColorHex: "#007AFF",
+    cornerRadius: 8
+)
+
+let cancelButton = Gr4vyThreeDSButtonCustomization(
+    textFontSize: 16,
+    textColorHex: "#007AFF",
+    backgroundColorHex: "#F0F0F0",
+    cornerRadius: 8
+)
+
+// Create label customization
+let label = Gr4vyThreeDSLabelCustomization(
+    textFontSize: 14,
+    textColorHex: "#333333",
+    headingTextFontSize: 18,
+    headingTextColorHex: "#000000"
+)
+
+// Create text box customization
+let textBox = Gr4vyThreeDSTextBoxCustomization(
+    textFontSize: 16,
+    textColorHex: "#000000",
+    borderWidth: 1,
+    borderColorHex: "#CCCCCC",
+    cornerRadius: 4
+)
+
+// Combine into UI customization
+let uiCustomization = Gr4vyThreeDSUiCustomization(
+    label: label,
+    toolbar: toolbar,
+    textBox: textBox,
+    buttons: [
+        .submit: submitButton,
+        .cancel: cancelButton
+    ]
+)
+
+// Use with tokenization
+let result = try await gr4vy.tokenize(
+    checkoutSessionId: "session_123",
+    cardData: cardData,
+    authenticate: true,
+    uiCustomization: Gr4vyThreeDSUiCustomizationMap(default: uiCustomization)
+)
+```
+
+**Example: Light and Dark Mode Support**
+
+```swift
+// Light mode customization
+let lightCustomization = Gr4vyThreeDSUiCustomization(
+    label: Gr4vyThreeDSLabelCustomization(
+        textColorHex: "#333333",
+        headingTextColorHex: "#000000"
+    ),
+    toolbar: Gr4vyThreeDSToolbarCustomization(
+        textColorHex: "#000000",
+        backgroundColorHex: "#F8F8F8"
+    ),
+    view: Gr4vyThreeDSViewCustomization(
+        challengeViewBackgroundColorHex: "#FFFFFF",
+        progressViewBackgroundColorHex: "#F0F0F0"
+    )
+)
+
+// Dark mode customization
+let darkCustomization = Gr4vyThreeDSUiCustomization(
+    label: Gr4vyThreeDSLabelCustomization(
+        textColorHex: "#E0E0E0",
+        headingTextColorHex: "#FFFFFF"
+    ),
+    toolbar: Gr4vyThreeDSToolbarCustomization(
+        textColorHex: "#FFFFFF",
+        backgroundColorHex: "#1C1C1E"
+    ),
+    view: Gr4vyThreeDSViewCustomization(
+        challengeViewBackgroundColorHex: "#000000",
+        progressViewBackgroundColorHex: "#1C1C1E"
+    )
+)
+
+// Create customization map with both modes
+let customizations = Gr4vyThreeDSUiCustomizationMap(
+    default: lightCustomization,
+    dark: darkCustomization
+)
+
+// Use with tokenization
+let result = try await gr4vy.tokenize(
+    checkoutSessionId: "session_123",
+    cardData: cardData,
+    authenticate: true,
+    uiCustomization: customizations
+)
+```
+
+**Available Customization Options:**
+
+- **Toolbar**: Header text, button text, colors, and fonts
+- **Labels**: Body text and heading styles
+- **Buttons**: Individual styling for different button types (submit, cancel, next, etc.)
+- **Text Boxes**: Input field styling including borders and corner radius
+- **View**: Background colors for the challenge and progress views
+
+All color values should be provided as hexadecimal strings (e.g., `"#007AFF"`).
 
 <!-- Start Error Handling [errors] -->
 ## Error Handling
@@ -375,6 +611,8 @@ By default, an API error will throw a `Gr4vyError` exception. The SDK provides e
 | `httpError`              | HTTP request failed      |
 | `networkError`           | Network connectivity issues |
 | `decodingError`          | JSON decoding failed     |
+| `threeDSError`           | 3D Secure authentication error |
+| `uiContextError`         | UI context resolution error |
 
 ### Example
 
@@ -396,6 +634,10 @@ do {
         print("Network error: \(urlError.localizedDescription)")
     case .decodingError(let message):
         print("Decoding error: \(message)")
+    case .threeDSError(let message):
+        print("3DS authentication error: \(message)")
+    case .uiContextError(let message):
+        print("UI context error: \(message)")
     }
 } catch {
     print("Unexpected error: \(error)")

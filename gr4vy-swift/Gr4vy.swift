@@ -6,6 +6,26 @@
 //
 
 import Foundation
+import UIKit
+
+// MARK: - UI Context Helper (iOS 13+)
+enum UIContext {
+    @MainActor
+    static func defaultPresenter() -> UIViewController? {
+        let root = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }?
+            .rootViewController
+        return top(from: root)
+    }
+    private static func top(from vc: UIViewController?) -> UIViewController? {
+        if let nav = vc as? UINavigationController { return top(from: nav.visibleViewController) }
+        if let tab = vc as? UITabBarController { return top(from: tab.selectedViewController) }
+        if let presented = vc?.presentedViewController { return top(from: presented) }
+        return vc
+    }
+}
 
 /// The official Gr4vy SDK for Swift.
 ///
@@ -36,6 +56,9 @@ public final class Gr4vy {
     
     /// Internal checkout session service for tokenization operations
     private let checkoutSession: Gr4vyCheckoutSessionService
+    
+    /// Internal 3DS service for tokenization with 3DS
+    private let threeDS: Gr4vy3DSService
 
     // MARK: - Initializer
     
@@ -47,6 +70,7 @@ public final class Gr4vy {
     ///   - server: Target server environment (use `.sandbox` for testing, `.production` for live)
     ///   - timeout: Request timeout interval in seconds (default: 30)
     ///   - debugMode: Enable detailed debug logging (default: false)
+    ///   - session: URLSession for network requests (default: .shared) - primarily for testing
     /// - Note: Debug mode should be disabled in production builds
     /// - SeeAlso: `updateToken(_:)` for updating authentication tokens
     public init(
@@ -55,17 +79,19 @@ public final class Gr4vy {
         merchantId: String? = nil,
         server: Gr4vyServer,
         timeout: TimeInterval = 30,
-        debugMode: Bool = false
+        debugMode: Bool = false,
+        session: URLSessionProtocol = URLSession.shared
     ) throws {
         guard !gr4vyId.isEmpty else { throw Gr4vyError.invalidGr4vyId }
 
         let setup = Gr4vySetup(gr4vyId: gr4vyId, token: token, merchantId: merchantId, server: server, timeout: timeout)
         self.setup = setup
         self.debugMode = debugMode
-        self.paymentOptions = Gr4vyPaymentOptionsService(setup: setup, debugMode: debugMode)
-        self.checkoutSession = Gr4vyCheckoutSessionService(setup: setup, debugMode: debugMode)
-        self.cardDetails = Gr4vyCardDetailsService(setup: setup, debugMode: debugMode)
-        self.paymentMethods = Gr4vyBuyersPaymentMethodsService(setup: setup, debugMode: debugMode)
+        self.paymentOptions = Gr4vyPaymentOptionsService(setup: setup, debugMode: debugMode, session: session)
+        self.checkoutSession = Gr4vyCheckoutSessionService(setup: setup, debugMode: debugMode, session: session)
+        self.cardDetails = Gr4vyCardDetailsService(setup: setup, debugMode: debugMode, session: session)
+        self.paymentMethods = Gr4vyBuyersPaymentMethodsService(setup: setup, debugMode: debugMode, session: session)
+        self.threeDS = Gr4vy3DSService(setup: setup, debugMode: debugMode, session: session)
 
         if debugMode {
             Gr4vyLogger.enable()
@@ -90,6 +116,7 @@ public final class Gr4vy {
         checkoutSession.updateSetup(setup)
         cardDetails.updateSetup(setup)
         paymentMethods.updateSetup(setup)
+        threeDS.updateSetup(setup)
     }
 
     /// Updates the merchant account ID for all SDK services.
@@ -108,6 +135,7 @@ public final class Gr4vy {
         checkoutSession.updateSetup(setup)
         cardDetails.updateSetup(setup)
         paymentMethods.updateSetup(setup)
+        threeDS.updateSetup(setup)
     }
 }
 
@@ -129,7 +157,7 @@ extension Gr4vy {
     ) async throws {
         try await checkoutSession.tokenize(checkoutSessionId: checkoutSessionId, cardData: cardData)
     }
-
+    
     /// Securely tokenizes payment method data for a checkout session using completion callbacks.
     /// - Parameters:
     ///   - checkoutSessionId: Unique identifier for the checkout session from Gr4vy
@@ -143,6 +171,145 @@ extension Gr4vy {
         completion: @escaping (Result<Void, Error>) -> Void
     ) {
         checkoutSession.tokenize(checkoutSessionId: checkoutSessionId, cardData: cardData, completion: completion)
+    }
+
+    /// Securely tokenizes payment method data with 3D Secure authentication support using async/await.
+    ///
+    /// This method handles both frictionless and challenge authentication flows automatically.
+    /// The 3DS challenge UI (if required) will be presented modally on the specified view controller.
+    ///
+    /// - Parameters:
+    ///   - checkoutSessionId: Unique identifier for the checkout session from Gr4vy
+    ///   - cardData: Payment method data to be securely tokenized
+    ///   - viewController: View controller to present the 3DS challenge screen
+    ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes (default: 5)
+    ///   - authenticate: This controls if we should attempt to authenticate the card data (default: false)
+    ///   - uiCustomization: Optional UI customization for the 3DS challenge screen
+    /// - Returns: `Gr4vyTokenizeResult` containing tokenization status and authentication details
+    /// - SeeAlso: `Gr4vyTokenizeResult` for the result structure
+    /// - SeeAlso: `Gr4vyThreeDSUiCustomizationMap` for UI customization options
+    public func tokenize(
+        checkoutSessionId: String,
+        cardData: Gr4vyCardData,
+        viewController: UIViewController,
+        sdkMaxTimeoutMinutes: Int,
+        authenticate: Bool = false,
+        uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil
+    ) async throws -> Gr4vyTokenizeResult {
+        try await threeDS.tokenize(
+            checkoutSessionId: checkoutSessionId,
+            cardData: cardData,
+            viewController: viewController,
+            sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes,
+            authenticate: authenticate,
+            uiCustomization: uiCustomization
+        )
+    }
+    
+    /// Securely tokenizes payment method data with 3D Secure authentication support using async/await.
+    ///
+    /// This convenience method automatically resolves the topmost view controller for presenting
+    /// the 3DS challenge screen. Use the explicit view controller variant if you need more control.
+    ///
+    /// - Parameters:
+    ///   - checkoutSessionId: Unique identifier for the checkout session from Gr4vy
+    ///   - cardData: Payment method data to be securely tokenized
+    ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes (default: 5)
+    ///   - authenticate: This controls if we should attempt to authenticate the card data (default: false)
+    ///   - uiCustomization: Optional UI customization for the 3DS challenge screen
+    /// - Returns: `Gr4vyTokenizeResult` containing tokenization status and authentication details
+    /// - Throws: `Gr4vyError.uiContextError` if unable to resolve a presenting view controller
+    /// - SeeAlso: `tokenize(checkoutSessionId:cardData:viewController:sdkMaxTimeoutMinutes:authenticate:uiCustomization:)` for explicit view controller control
+    public func tokenize(
+        checkoutSessionId: String,
+        cardData: Gr4vyCardData,
+        sdkMaxTimeoutMinutes: Int = 5,
+        authenticate: Bool = false,
+        uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil
+    ) async throws -> Gr4vyTokenizeResult {
+        guard let presenter = await UIContext.defaultPresenter() else {
+            throw Gr4vyError.uiContextError("Unable to resolve presenting view controller")
+        }
+        return try await tokenize(
+            checkoutSessionId: checkoutSessionId,
+            cardData: cardData,
+            viewController: presenter,
+            sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes,
+            authenticate: authenticate,
+            uiCustomization: uiCustomization
+        )
+    }
+
+    /// Securely tokenizes payment method data with 3D Secure authentication support using completion callbacks.
+    ///
+    /// This method handles both frictionless and challenge authentication flows automatically.
+    /// The 3DS challenge UI (if required) will be presented modally on the specified view controller.
+    ///
+    /// - Parameters:
+    ///   - checkoutSessionId: Unique identifier for the checkout session from Gr4vy
+    ///   - cardData: Payment method data to be securely tokenized
+    ///   - viewController: View controller to present the 3DS challenge screen
+    ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes (default: 5)
+    ///   - authenticate: This controls if we should attempt to authenticate the card data (default: false)
+    ///   - uiCustomization: Optional UI customization for the 3DS challenge screen
+    ///   - completion: Result callback with tokenization result or error
+    /// - SeeAlso: `tokenize(checkoutSessionId:cardData:viewController:sdkMaxTimeoutMinutes:authenticate:uiCustomization:)` for async/await version
+    public func tokenize(
+        checkoutSessionId: String,
+        cardData: Gr4vyCardData,
+        viewController: UIViewController,
+        sdkMaxTimeoutMinutes: Int = 5,
+        authenticate: Bool = false,
+        uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil,
+        completion: @escaping (Result<Gr4vyTokenizeResult, Error>) -> Void
+    ) {
+        threeDS.tokenize(
+            checkoutSessionId: checkoutSessionId,
+            cardData: cardData,
+            viewController: viewController,
+            sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes,
+            authenticate: authenticate,
+            uiCustomization: uiCustomization,
+            completion: completion
+        )
+    }
+
+    /// Securely tokenizes payment method data with 3D Secure authentication support using completion callbacks.
+    ///
+    /// This convenience method automatically resolves the topmost view controller for presenting
+    /// the 3DS challenge screen. Use the explicit view controller variant if you need more control.
+    ///
+    /// - Parameters:
+    ///   - checkoutSessionId: Unique identifier for the checkout session from Gr4vy
+    ///   - cardData: Payment method data to be securely tokenized
+    ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes (default: 5)
+    ///   - authenticate: This controls if we should attempt to authenticate the card data (default: false)
+    ///   - uiCustomization: Optional UI customization for the 3DS challenge screen
+    ///   - completion: Result callback with tokenization result or error. May return `Gr4vyError.uiContextError` if unable to resolve a presenting view controller
+    /// - SeeAlso: `tokenize(checkoutSessionId:cardData:viewController:sdkMaxTimeoutMinutes:authenticate:uiCustomization:completion:)` for explicit view controller control
+    public func tokenize(
+        checkoutSessionId: String,
+        cardData: Gr4vyCardData,
+        sdkMaxTimeoutMinutes: Int = 5,
+        authenticate: Bool = false,
+        uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil,
+        completion: @escaping (Result<Gr4vyTokenizeResult, Error>) -> Void
+    ) {
+        Task { @MainActor in
+            guard let presenter = UIContext.defaultPresenter() else {
+                completion(.failure(Gr4vyError.uiContextError("Unable to resolve presenting view controller")))
+                return
+            }
+            tokenize(
+                checkoutSessionId: checkoutSessionId,
+                cardData: cardData,
+                viewController: presenter,
+                sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes,
+                authenticate: authenticate,
+                uiCustomization: uiCustomization,
+                completion: completion
+            )
+        }
     }
 }
 
@@ -209,6 +376,22 @@ public enum Gr4vyError: Error, LocalizedError, Equatable {
     /// 
     /// - Parameter message: Detailed error description for debugging
     case decodingError(String)
+    
+    /// 3DS Error.
+    ///
+    /// This error occurs when the SDK cannot start a 3DS session from the API response,
+    /// typically due to unexpected response format or missing fields.
+    ///
+    /// - Parameter message: Detailed error description for debugging
+    case threeDSError(String)
+    
+    /// UI context resolution error.
+    ///
+    /// This error occurs when the SDK cannot resolve a presenting view controller
+    /// for displaying UI components (e.g., 3DS challenge screens).
+    ///
+    /// - Parameter message: Detailed error description for debugging
+    case uiContextError(String)
 
     // MARK: - Public Methods
     
@@ -225,6 +408,10 @@ public enum Gr4vyError: Error, LocalizedError, Equatable {
             return "Network connectivity error: \(urlError.localizedDescription)"
         case .decodingError(let message):
             return "Failed to process server response: \(message)"
+        case .threeDSError(let message):
+            return "Failed to start a 3DS session: \(message)"
+        case .uiContextError(let message):
+            return "UI context error: \(message)"
         }
     }
 }

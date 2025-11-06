@@ -298,7 +298,7 @@ final class Gr4vyCheckoutSessionRequestTests: XCTestCase {
         XCTAssertNil(request.timeout)
     }
 
-    func testCheckoutSessionRequestEquality() {
+    func testCheckoutSessionRequestEquality() throws {
         // Given
         let cardPayment1 = Gr4vyPaymentMethod.card(
             CardPaymentMethod(
@@ -322,13 +322,28 @@ final class Gr4vyCheckoutSessionRequestTests: XCTestCase {
         // Note: Since the struct doesn't conform to Equatable, we test property equality
         XCTAssertEqual(request1.timeout, request2.timeout)
 
-        // Verify payment method equality by encoding both
+        // Verify payment method equality by comparing decoded JSON objects
+        // (comparing raw Data can fail due to non-deterministic key ordering in JSON encoding)
         let encoder = JSONEncoder()
-        let data1 = try? encoder.encode(request1)
-        let data2 = try? encoder.encode(request2)
+        let data1 = try encoder.encode(request1)
+        let data2 = try encoder.encode(request2)
 
         XCTAssertNotNil(data1)
         XCTAssertNotNil(data2)
-        XCTAssertEqual(data1, data2)
+        
+        let json1 = try JSONSerialization.jsonObject(with: data1) as? [String: Any]
+        let json2 = try JSONSerialization.jsonObject(with: data2) as? [String: Any]
+        
+        XCTAssertNotNil(json1)
+        XCTAssertNotNil(json2)
+        
+        // Compare JSON structure
+        let paymentMethod1 = json1?["payment_method"] as? [String: Any]
+        let paymentMethod2 = json2?["payment_method"] as? [String: Any]
+        
+        XCTAssertEqual(paymentMethod1?["method"] as? String, paymentMethod2?["method"] as? String)
+        XCTAssertEqual(paymentMethod1?["number"] as? String, paymentMethod2?["number"] as? String)
+        XCTAssertEqual(paymentMethod1?["expiration_date"] as? String, paymentMethod2?["expiration_date"] as? String)
+        XCTAssertEqual(paymentMethod1?["security_code"] as? String, paymentMethod2?["security_code"] as? String)
     }
 }
