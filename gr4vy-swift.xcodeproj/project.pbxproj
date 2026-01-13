@@ -10,6 +10,12 @@
 		592C99DA2E256E4D004CECBE /* Gr4vyCardDetailsServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 592C99D92E256E4D004CECBE /* Gr4vyCardDetailsServiceTests.swift */; };
 		592C99DC2E264425004CECBE /* Version.swift in Sources */ = {isa = PBXBuildFile; fileRef = 592C99DB2E264425004CECBE /* Version.swift */; };
 		592F9FE8278CCB7A00A8D538 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 592F9FE7278CCB7A00A8D538 /* README.md */; };
+		593D89B02EB50ECF00C02A0A /* Gr4vy3DSServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593D89AF2EB50ECF00C02A0A /* Gr4vy3DSServiceTests.swift */; };
+		593D89B22EB5139A00C02A0A /* VersionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593D89B12EB5139A00C02A0A /* VersionTests.swift */; };
+		593D89B42EB513A700C02A0A /* Gr4vyVersioningResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593D89B32EB513A700C02A0A /* Gr4vyVersioningResponseTests.swift */; };
+		593D89B62EB513B400C02A0A /* Gr4vyThreeDSecureAuthenticateRequestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593D89B52EB513B400C02A0A /* Gr4vyThreeDSecureAuthenticateRequestTests.swift */; };
+		5951A4752E5C2E4E0032269A /* Gr4vy3DSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5951A4742E5C2E470032269A /* Gr4vy3DSService.swift */; };
+		5951A47E2E5C372B0032269A /* ThreeDS_SDK in Frameworks */ = {isa = PBXBuildFile; productRef = 5951A47D2E5C372B0032269A /* ThreeDS_SDK */; };
 		59777A742E0AF6CC00408EC5 /* Gr4vyPaymentOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777A732E0AF6C900408EC5 /* Gr4vyPaymentOption.swift */; };
 		59777A792E0AF8A300408EC5 /* JSONDecoder+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777A782E0AF89A00408EC5 /* JSONDecoder+Extensions.swift */; };
 		59777A7B2E0B05E600408EC5 /* Gr4vyPaymentOptionRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777A7A2E0B05E200408EC5 /* Gr4vyPaymentOptionRequest.swift */; };
@@ -22,11 +28,9 @@
 		59777AA32E16813300408EC5 /* Gr4vyCardDetailsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777AA22E16813200408EC5 /* Gr4vyCardDetailsService.swift */; };
 		59777AA72E16821300408EC5 /* Gr4vyCardDetailsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777AA62E16821200408EC5 /* Gr4vyCardDetailsRequest.swift */; };
 		59777AA92E1684A800408EC5 /* Gr4vyCardDetails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777AA82E1684A700408EC5 /* Gr4vyCardDetails.swift */; };
-		59777AAB2E168BD400408EC5 /* Gr4vyCardDetailsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777AAA2E168BD300408EC5 /* Gr4vyCardDetailsResponse.swift */; };
 		59777AAD2E169BDD00408EC5 /* Gr4vyBuyersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777AAC2E169BD700408EC5 /* Gr4vyBuyersService.swift */; };
 		59777AAF2E169CD800408EC5 /* Gr4vyBuyersPaymentMethodsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777AAE2E169CCE00408EC5 /* Gr4vyBuyersPaymentMethodsRequest.swift */; };
 		59777AB12E169D1700408EC5 /* Gr4vyBuyersPaymentMethods.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777AB02E169D1600408EC5 /* Gr4vyBuyersPaymentMethods.swift */; };
-		59777AB32E169DA300408EC5 /* Gr4vyBuyersPaymentMethodsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777AB22E169DA300408EC5 /* Gr4vyBuyersPaymentMethodsResponse.swift */; };
 		59777AC92E1EF24E00408EC5 /* Gr4vySDK.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777AC82E1EF24E00408EC5 /* Gr4vySDK.swift */; };
 		59777AD72E1EF6E600408EC5 /* Gr4vyUtilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777AD62E1EF6E600408EC5 /* Gr4vyUtilityTests.swift */; };
 		59777ADA2E1EF6E600408EC5 /* Gr4vyLoggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59777AD42E1EF6E600408EC5 /* Gr4vyLoggerTests.swift */; };
@@ -39,6 +43,8 @@
 		5978B290271C7F1400F5CC00 /* gr4vy_swift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5978B285271C7F1300F5CC00 /* gr4vy_swift.framework */; };
 		5978B296271C7F1400F5CC00 /* gr4vy_swift.h in Headers */ = {isa = PBXBuildFile; fileRef = 5978B288271C7F1300F5CC00 /* gr4vy_swift.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5986DBF42785EBD800D0A458 /* Gr4vyUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5986DBF32785EBD800D0A458 /* Gr4vyUtility.swift */; };
+		599A353A2E80201B00B9AA91 /* acq-encryption-visa-sign-certeq-rsa-ncaDS.crt in Resources */ = {isa = PBXBuildFile; fileRef = 599A35382E80201B00B9AA91 /* acq-encryption-visa-sign-certeq-rsa-ncaDS.crt */; };
+		599A353B2E80201B00B9AA91 /* acq-root-certeq-prev-environment-new.crt in Resources */ = {isa = PBXBuildFile; fileRef = 599A35392E80201B00B9AA91 /* acq-root-certeq-prev-environment-new.crt */; };
 		59C64D252E1F8C1B0017C2F3 /* Gr4vyCardDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C64D232E1F8C1B0017C2F3 /* Gr4vyCardDataTests.swift */; };
 		59C64D262E1F8C1B0017C2F3 /* Gr4vyPaymentOptionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C64D242E1F8C1B0017C2F3 /* Gr4vyPaymentOptionTests.swift */; };
 		59C64D272E1F8C1B0017C2F3 /* Gr4vyBuyersPaymentMethodsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C64D222E1F8C1B0017C2F3 /* Gr4vyBuyersPaymentMethodsTests.swift */; };
@@ -53,7 +59,32 @@
 		59C64D442E1F8DFD0017C2F3 /* Gr4vyPaymentOptionRequestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C64D432E1F8DFD0017C2F3 /* Gr4vyPaymentOptionRequestTests.swift */; };
 		59C64D452E1F8DFD0017C2F3 /* Gr4vyCardDetailsRequestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C64D422E1F8DFD0017C2F3 /* Gr4vyCardDetailsRequestTests.swift */; };
 		59C64D472E1F92D90017C2F3 /* Gr4vyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C64D462E1F92D90017C2F3 /* Gr4vyTests.swift */; };
+		59CB122B2E8044F10012745B /* Gr4vyThreeDSUiCustomization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CB122A2E8044F10012745B /* Gr4vyThreeDSUiCustomization.swift */; };
+		59CB122D2E8044FA0012745B /* Gr4vyThreeDSUiCustomizationMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CB122C2E8044FA0012745B /* Gr4vyThreeDSUiCustomizationMapper.swift */; };
 		59D09964274654C70086348B /* Gr4vyLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59D09963274654C70086348B /* Gr4vyLogger.swift */; };
+		59F1EAB22E9F6B8300156E73 /* Gr4vyBuyersPaymentMethodsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EAB02E9F6B8300156E73 /* Gr4vyBuyersPaymentMethodsResponse.swift */; };
+		59F1EAB32E9F6B8300156E73 /* Gr4vyCardDetailsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EAB12E9F6B8300156E73 /* Gr4vyCardDetailsResponse.swift */; };
+		59F1EAB52E9F6BAB00156E73 /* Gr4vyVersioningResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EAB42E9F6BA400156E73 /* Gr4vyVersioningResponse.swift */; };
+		59F1EAB72E9F6C1B00156E73 /* Gr4vyThreeDSecureAuthenticateRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EAB62E9F6C1700156E73 /* Gr4vyThreeDSecureAuthenticateRequest.swift */; };
+		59F1EABB2E9FE9B700156E73 /* Gr4vyThreeDSecureResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EABA2E9FE9B400156E73 /* Gr4vyThreeDSecureResponse.swift */; };
+		59F1EABD2E9FE9DE00156E73 /* Gr4vyThreeDSConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EABC2E9FE9DD00156E73 /* Gr4vyThreeDSConstants.swift */; };
+		59F1EAC32E9FEAF200156E73 /* Gr4vyChallengeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EABF2E9FEAF200156E73 /* Gr4vyChallengeResponse.swift */; };
+		59F1EAC42E9FEAF200156E73 /* Gr4vyThreeDSModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EAC12E9FEAF200156E73 /* Gr4vyThreeDSModels.swift */; };
+		59F1EAC52E9FEAF200156E73 /* Gr4vyACSRenderingType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EABE2E9FEAF200156E73 /* Gr4vyACSRenderingType.swift */; };
+		59F1EAC72E9FF25400156E73 /* Gr4vyTestCertificateConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EAC62E9FF25400156E73 /* Gr4vyTestCertificateConfiguration.swift */; };
+		59F1EAC82EA0000000156E73 /* Gr4vyAuthentication.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EAC92EA0000000156E74 /* Gr4vyAuthentication.swift */; };
+		59F1EAC92EA23E5F00156E73 /* Gr4vyTokenizeResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EAC82EA23E5F00156E73 /* Gr4vyTokenizeResult.swift */; };
+		59F1EACB2EB4F76B00156E73 /* Gr4vyEmptyRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EACA2EB4F76B00156E73 /* Gr4vyEmptyRequest.swift */; };
+		59F1EACF2EB4FF8B00156E73 /* Gr4vyAuthenticationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EACC2EB4FF8B00156E73 /* Gr4vyAuthenticationTests.swift */; };
+		59F1EAD02EB4FF8B00156E73 /* Gr4vyThreeDSUiCustomizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EACD2EB4FF8B00156E73 /* Gr4vyThreeDSUiCustomizationTests.swift */; };
+		59F1EAD12EB4FF8B00156E73 /* Gr4vyTokenizeResultTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EACE2EB4FF8B00156E73 /* Gr4vyTokenizeResultTests.swift */; };
+		59F1EAD42EB4FF9500156E73 /* Gr4vyTestCertificateConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EAD22EB4FF9500156E73 /* Gr4vyTestCertificateConfigurationTests.swift */; };
+		59F1EAD52EB4FF9500156E73 /* Gr4vyThreeDSUiCustomizationMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EAD32EB4FF9500156E73 /* Gr4vyThreeDSUiCustomizationMapperTests.swift */; };
+		59F1EADA2EB5005700156E73 /* acq-encryption-jcb-sign-certeq-rsa-ncaDS.crt in Resources */ = {isa = PBXBuildFile; fileRef = 59F1EAD82EB5005700156E73 /* acq-encryption-jcb-sign-certeq-rsa-ncaDS.crt */; };
+		59F1EADB2EB5005700156E73 /* acq-encryption-mc-sign-certeq-rsa-ncaDS.crt in Resources */ = {isa = PBXBuildFile; fileRef = 59F1EAD92EB5005700156E73 /* acq-encryption-mc-sign-certeq-rsa-ncaDS.crt */; };
+		59F1EADC2EB5005700156E73 /* acq-encryption-amex-sign-certeq-rsa-ncaDS.crt in Resources */ = {isa = PBXBuildFile; fileRef = 59F1EAD62EB5005700156E73 /* acq-encryption-amex-sign-certeq-rsa-ncaDS.crt */; };
+		59F1EADD2EB5005700156E73 /* acq-encryption-diners-sign-certeq-rsa-ncaDS.crt in Resources */ = {isa = PBXBuildFile; fileRef = 59F1EAD72EB5005700156E73 /* acq-encryption-diners-sign-certeq-rsa-ncaDS.crt */; };
+		59F1EAE02EB5066600156E73 /* Gr4vyThreeDSecureResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59F1EADE2EB5066600156E73 /* Gr4vyThreeDSecureResponseTests.swift */; };
 		59FE69502722BB7A006C1C08 /* Gr4vy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59FE694F2722BB7A006C1C08 /* Gr4vy.swift */; };
 /* End PBXBuildFile section */
 
@@ -71,6 +102,11 @@
 		592C99D92E256E4D004CECBE /* Gr4vyCardDetailsServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyCardDetailsServiceTests.swift; sourceTree = "<group>"; };
 		592C99DB2E264425004CECBE /* Version.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Version.swift; sourceTree = "<group>"; };
 		592F9FE7278CCB7A00A8D538 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		593D89AF2EB50ECF00C02A0A /* Gr4vy3DSServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vy3DSServiceTests.swift; sourceTree = "<group>"; };
+		593D89B12EB5139A00C02A0A /* VersionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionTests.swift; sourceTree = "<group>"; };
+		593D89B32EB513A700C02A0A /* Gr4vyVersioningResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyVersioningResponseTests.swift; sourceTree = "<group>"; };
+		593D89B52EB513B400C02A0A /* Gr4vyThreeDSecureAuthenticateRequestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyThreeDSecureAuthenticateRequestTests.swift; sourceTree = "<group>"; };
+		5951A4742E5C2E470032269A /* Gr4vy3DSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vy3DSService.swift; sourceTree = "<group>"; };
 		59777A732E0AF6C900408EC5 /* Gr4vyPaymentOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyPaymentOption.swift; sourceTree = "<group>"; };
 		59777A782E0AF89A00408EC5 /* JSONDecoder+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JSONDecoder+Extensions.swift"; sourceTree = "<group>"; };
 		59777A7A2E0B05E200408EC5 /* Gr4vyPaymentOptionRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyPaymentOptionRequest.swift; sourceTree = "<group>"; };
@@ -83,11 +119,9 @@
 		59777AA22E16813200408EC5 /* Gr4vyCardDetailsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyCardDetailsService.swift; sourceTree = "<group>"; };
 		59777AA62E16821200408EC5 /* Gr4vyCardDetailsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyCardDetailsRequest.swift; sourceTree = "<group>"; };
 		59777AA82E1684A700408EC5 /* Gr4vyCardDetails.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyCardDetails.swift; sourceTree = "<group>"; };
-		59777AAA2E168BD300408EC5 /* Gr4vyCardDetailsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyCardDetailsResponse.swift; sourceTree = "<group>"; };
 		59777AAC2E169BD700408EC5 /* Gr4vyBuyersService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyBuyersService.swift; sourceTree = "<group>"; };
 		59777AAE2E169CCE00408EC5 /* Gr4vyBuyersPaymentMethodsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyBuyersPaymentMethodsRequest.swift; sourceTree = "<group>"; };
 		59777AB02E169D1600408EC5 /* Gr4vyBuyersPaymentMethods.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyBuyersPaymentMethods.swift; sourceTree = "<group>"; };
-		59777AB22E169DA300408EC5 /* Gr4vyBuyersPaymentMethodsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyBuyersPaymentMethodsResponse.swift; sourceTree = "<group>"; };
 		59777AC82E1EF24E00408EC5 /* Gr4vySDK.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vySDK.swift; sourceTree = "<group>"; };
 		59777AD22E1EF5B400408EC5 /* gr4vy-swiftTests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "gr4vy-swiftTests.xctestplan"; sourceTree = "<group>"; };
 		59777AD42E1EF6E600408EC5 /* Gr4vyLoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyLoggerTests.swift; sourceTree = "<group>"; };
@@ -102,6 +136,8 @@
 		5978B289271C7F1300F5CC00 /* gr4vy_swift.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = gr4vy_swift.docc; sourceTree = "<group>"; };
 		5978B28F271C7F1400F5CC00 /* gr4vy-swiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "gr4vy-swiftTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5986DBF32785EBD800D0A458 /* Gr4vyUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyUtility.swift; sourceTree = "<group>"; };
+		599A35382E80201B00B9AA91 /* acq-encryption-visa-sign-certeq-rsa-ncaDS.crt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "acq-encryption-visa-sign-certeq-rsa-ncaDS.crt"; sourceTree = "<group>"; };
+		599A35392E80201B00B9AA91 /* acq-root-certeq-prev-environment-new.crt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "acq-root-certeq-prev-environment-new.crt"; sourceTree = "<group>"; };
 		59C64D222E1F8C1B0017C2F3 /* Gr4vyBuyersPaymentMethodsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyBuyersPaymentMethodsTests.swift; sourceTree = "<group>"; };
 		59C64D232E1F8C1B0017C2F3 /* Gr4vyCardDataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyCardDataTests.swift; sourceTree = "<group>"; };
 		59C64D242E1F8C1B0017C2F3 /* Gr4vyPaymentOptionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyPaymentOptionTests.swift; sourceTree = "<group>"; };
@@ -116,7 +152,32 @@
 		59C64D422E1F8DFD0017C2F3 /* Gr4vyCardDetailsRequestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyCardDetailsRequestTests.swift; sourceTree = "<group>"; };
 		59C64D432E1F8DFD0017C2F3 /* Gr4vyPaymentOptionRequestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyPaymentOptionRequestTests.swift; sourceTree = "<group>"; };
 		59C64D462E1F92D90017C2F3 /* Gr4vyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyTests.swift; sourceTree = "<group>"; };
+		59CB122A2E8044F10012745B /* Gr4vyThreeDSUiCustomization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyThreeDSUiCustomization.swift; sourceTree = "<group>"; };
+		59CB122C2E8044FA0012745B /* Gr4vyThreeDSUiCustomizationMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyThreeDSUiCustomizationMapper.swift; sourceTree = "<group>"; };
 		59D09963274654C70086348B /* Gr4vyLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyLogger.swift; sourceTree = "<group>"; };
+		59F1EAB02E9F6B8300156E73 /* Gr4vyBuyersPaymentMethodsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyBuyersPaymentMethodsResponse.swift; sourceTree = "<group>"; };
+		59F1EAB12E9F6B8300156E73 /* Gr4vyCardDetailsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyCardDetailsResponse.swift; sourceTree = "<group>"; };
+		59F1EAB42E9F6BA400156E73 /* Gr4vyVersioningResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyVersioningResponse.swift; sourceTree = "<group>"; };
+		59F1EAB62E9F6C1700156E73 /* Gr4vyThreeDSecureAuthenticateRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyThreeDSecureAuthenticateRequest.swift; sourceTree = "<group>"; };
+		59F1EABA2E9FE9B400156E73 /* Gr4vyThreeDSecureResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyThreeDSecureResponse.swift; sourceTree = "<group>"; };
+		59F1EABC2E9FE9DD00156E73 /* Gr4vyThreeDSConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyThreeDSConstants.swift; sourceTree = "<group>"; };
+		59F1EABE2E9FEAF200156E73 /* Gr4vyACSRenderingType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyACSRenderingType.swift; sourceTree = "<group>"; };
+		59F1EABF2E9FEAF200156E73 /* Gr4vyChallengeResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyChallengeResponse.swift; sourceTree = "<group>"; };
+		59F1EAC12E9FEAF200156E73 /* Gr4vyThreeDSModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyThreeDSModels.swift; sourceTree = "<group>"; };
+		59F1EAC62E9FF25400156E73 /* Gr4vyTestCertificateConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyTestCertificateConfiguration.swift; sourceTree = "<group>"; };
+		59F1EAC82EA23E5F00156E73 /* Gr4vyTokenizeResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyTokenizeResult.swift; sourceTree = "<group>"; };
+		59F1EAC92EA0000000156E74 /* Gr4vyAuthentication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyAuthentication.swift; sourceTree = "<group>"; };
+		59F1EACA2EB4F76B00156E73 /* Gr4vyEmptyRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyEmptyRequest.swift; sourceTree = "<group>"; };
+		59F1EACC2EB4FF8B00156E73 /* Gr4vyAuthenticationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyAuthenticationTests.swift; sourceTree = "<group>"; };
+		59F1EACD2EB4FF8B00156E73 /* Gr4vyThreeDSUiCustomizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyThreeDSUiCustomizationTests.swift; sourceTree = "<group>"; };
+		59F1EACE2EB4FF8B00156E73 /* Gr4vyTokenizeResultTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyTokenizeResultTests.swift; sourceTree = "<group>"; };
+		59F1EAD22EB4FF9500156E73 /* Gr4vyTestCertificateConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyTestCertificateConfigurationTests.swift; sourceTree = "<group>"; };
+		59F1EAD32EB4FF9500156E73 /* Gr4vyThreeDSUiCustomizationMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyThreeDSUiCustomizationMapperTests.swift; sourceTree = "<group>"; };
+		59F1EAD62EB5005700156E73 /* acq-encryption-amex-sign-certeq-rsa-ncaDS.crt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "acq-encryption-amex-sign-certeq-rsa-ncaDS.crt"; sourceTree = "<group>"; };
+		59F1EAD72EB5005700156E73 /* acq-encryption-diners-sign-certeq-rsa-ncaDS.crt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "acq-encryption-diners-sign-certeq-rsa-ncaDS.crt"; sourceTree = "<group>"; };
+		59F1EAD82EB5005700156E73 /* acq-encryption-jcb-sign-certeq-rsa-ncaDS.crt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "acq-encryption-jcb-sign-certeq-rsa-ncaDS.crt"; sourceTree = "<group>"; };
+		59F1EAD92EB5005700156E73 /* acq-encryption-mc-sign-certeq-rsa-ncaDS.crt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "acq-encryption-mc-sign-certeq-rsa-ncaDS.crt"; sourceTree = "<group>"; };
+		59F1EADE2EB5066600156E73 /* Gr4vyThreeDSecureResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gr4vyThreeDSecureResponseTests.swift; sourceTree = "<group>"; };
 		59FE694F2722BB7A006C1C08 /* Gr4vy.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Gr4vy.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -125,6 +186,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5951A47E2E5C372B0032269A /* ThreeDS_SDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -142,6 +204,9 @@
 		59777A952E0DDF6E00408EC5 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				59F1EAC62E9FF25400156E73 /* Gr4vyTestCertificateConfiguration.swift */,
+				59CB122C2E8044FA0012745B /* Gr4vyThreeDSUiCustomizationMapper.swift */,
+				5951A4742E5C2E470032269A /* Gr4vy3DSService.swift */,
 				59777AAC2E169BD700408EC5 /* Gr4vyBuyersService.swift */,
 				59777AA22E16813200408EC5 /* Gr4vyCardDetailsService.swift */,
 				59777AA02E167A1500408EC5 /* Gr4vyHTTPClient.swift */,
@@ -154,6 +219,8 @@
 		59777AA52E1681B800408EC5 /* Requests */ = {
 			isa = PBXGroup;
 			children = (
+				59F1EACA2EB4F76B00156E73 /* Gr4vyEmptyRequest.swift */,
+				59F1EAB62E9F6C1700156E73 /* Gr4vyThreeDSecureAuthenticateRequest.swift */,
 				59777AAE2E169CCE00408EC5 /* Gr4vyBuyersPaymentMethodsRequest.swift */,
 				59777AA62E16821200408EC5 /* Gr4vyCardDetailsRequest.swift */,
 				59777A9A2E0DE44800408EC5 /* Gr4vyCheckoutSessionRequest.swift */,
@@ -173,6 +240,7 @@
 		59777B062E1F85FA00408EC5 /* Requests */ = {
 			isa = PBXGroup;
 			children = (
+				593D89B52EB513B400C02A0A /* Gr4vyThreeDSecureAuthenticateRequestTests.swift */,
 				59C64D422E1F8DFD0017C2F3 /* Gr4vyCardDetailsRequestTests.swift */,
 				59C64D432E1F8DFD0017C2F3 /* Gr4vyPaymentOptionRequestTests.swift */,
 				59777B042E1F85FA00408EC5 /* Gr4vyBuyersPaymentMethodsRequestTests.swift */,
@@ -213,9 +281,16 @@
 		5978B287271C7F1300F5CC00 /* gr4vy-swift */ = {
 			isa = PBXGroup;
 			children = (
+				59F1EAD62EB5005700156E73 /* acq-encryption-amex-sign-certeq-rsa-ncaDS.crt */,
+				59F1EAD72EB5005700156E73 /* acq-encryption-diners-sign-certeq-rsa-ncaDS.crt */,
+				59F1EAD82EB5005700156E73 /* acq-encryption-jcb-sign-certeq-rsa-ncaDS.crt */,
+				59F1EAD92EB5005700156E73 /* acq-encryption-mc-sign-certeq-rsa-ncaDS.crt */,
+				599A35382E80201B00B9AA91 /* acq-encryption-visa-sign-certeq-rsa-ncaDS.crt */,
+				599A35392E80201B00B9AA91 /* acq-root-certeq-prev-environment-new.crt */,
 				59C5D45629E34C80008FFEBC /* Extensions */,
 				59C5D45329E34C3B008FFEBC /* Models */,
 				59777AA52E1681B800408EC5 /* Requests */,
+				59F1EAAF2E9F6B6800156E73 /* Responses */,
 				59777A952E0DDF6E00408EC5 /* Services */,
 				59FE694F2722BB7A006C1C08 /* Gr4vy.swift */,
 				59D09963274654C70086348B /* Gr4vyLogger.swift */,
@@ -231,6 +306,8 @@
 		5978B293271C7F1400F5CC00 /* gr4vy-swiftTests */ = {
 			isa = PBXGroup;
 			children = (
+				593D89B12EB5139A00C02A0A /* VersionTests.swift */,
+				59F1EADF2EB5066600156E73 /* Responses */,
 				59777B0D2E1F862300408EC5 /* Extensions */,
 				59C64D1B2E1F8B630017C2F3 /* Models */,
 				59C64D1A2E1F8B5D0017C2F3 /* Services */,
@@ -247,9 +324,14 @@
 		59C5D45329E34C3B008FFEBC /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				59777AB22E169DA300408EC5 /* Gr4vyBuyersPaymentMethodsResponse.swift */,
+				59F1EAC82EA23E5F00156E73 /* Gr4vyTokenizeResult.swift */,
+				59F1EABE2E9FEAF200156E73 /* Gr4vyACSRenderingType.swift */,
+				59F1EABF2E9FEAF200156E73 /* Gr4vyChallengeResponse.swift */,
+				59F1EAC12E9FEAF200156E73 /* Gr4vyThreeDSModels.swift */,
+				59F1EABC2E9FE9DD00156E73 /* Gr4vyThreeDSConstants.swift */,
+				59F1EAC92EA0000000156E74 /* Gr4vyAuthentication.swift */,
+				59CB122A2E8044F10012745B /* Gr4vyThreeDSUiCustomization.swift */,
 				59777AB02E169D1600408EC5 /* Gr4vyBuyersPaymentMethods.swift */,
-				59777AAA2E168BD300408EC5 /* Gr4vyCardDetailsResponse.swift */,
 				59777AA82E1684A700408EC5 /* Gr4vyCardDetails.swift */,
 				59777A9C2E0DE6D800408EC5 /* Gr4vyCardData.swift */,
 				59777A932E0DACFE00408EC5 /* Gr4vySetup.swift */,
@@ -269,6 +351,9 @@
 		59C64D1A2E1F8B5D0017C2F3 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				593D89AF2EB50ECF00C02A0A /* Gr4vy3DSServiceTests.swift */,
+				59F1EAD22EB4FF9500156E73 /* Gr4vyTestCertificateConfigurationTests.swift */,
+				59F1EAD32EB4FF9500156E73 /* Gr4vyThreeDSUiCustomizationMapperTests.swift */,
 				592C99D92E256E4D004CECBE /* Gr4vyCardDetailsServiceTests.swift */,
 				59C64D3C2E1F8DF50017C2F3 /* Gr4vyBuyersServiceTests.swift */,
 				59C64D3D2E1F8DF50017C2F3 /* Gr4vyCheckoutSessionServiceTests.swift */,
@@ -281,6 +366,9 @@
 		59C64D1B2E1F8B630017C2F3 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				59F1EACC2EB4FF8B00156E73 /* Gr4vyAuthenticationTests.swift */,
+				59F1EACD2EB4FF8B00156E73 /* Gr4vyThreeDSUiCustomizationTests.swift */,
+				59F1EACE2EB4FF8B00156E73 /* Gr4vyTokenizeResultTests.swift */,
 				59C64D342E1F8DE90017C2F3 /* Gr4vyBuyersPaymentMethodsResponseTests.swift */,
 				59C64D352E1F8DE90017C2F3 /* Gr4vyCardDetailsResponseTests.swift */,
 				59C64D362E1F8DE90017C2F3 /* Gr4vyCardDetailsTests.swift */,
@@ -290,6 +378,26 @@
 				59C64D242E1F8C1B0017C2F3 /* Gr4vyPaymentOptionTests.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		59F1EAAF2E9F6B6800156E73 /* Responses */ = {
+			isa = PBXGroup;
+			children = (
+				59F1EABA2E9FE9B400156E73 /* Gr4vyThreeDSecureResponse.swift */,
+				59F1EAB42E9F6BA400156E73 /* Gr4vyVersioningResponse.swift */,
+				59F1EAB02E9F6B8300156E73 /* Gr4vyBuyersPaymentMethodsResponse.swift */,
+				59F1EAB12E9F6B8300156E73 /* Gr4vyCardDetailsResponse.swift */,
+			);
+			path = Responses;
+			sourceTree = "<group>";
+		};
+		59F1EADF2EB5066600156E73 /* Responses */ = {
+			isa = PBXGroup;
+			children = (
+				593D89B32EB513A700C02A0A /* Gr4vyVersioningResponseTests.swift */,
+				59F1EADE2EB5066600156E73 /* Gr4vyThreeDSecureResponseTests.swift */,
+			);
+			path = Responses;
 			sourceTree = "<group>";
 		};
 		59FE69712722C131006C1C08 /* Frameworks */ = {
@@ -376,6 +484,9 @@
 				Base,
 			);
 			mainGroup = 5978B27B271C7F1300F5CC00;
+			packageReferences = (
+				5951A47C2E5C372B0032269A /* XCRemoteSwiftPackageReference "SPM" */,
+			);
 			productRefGroup = 5978B286271C7F1300F5CC00 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -391,6 +502,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				599A353A2E80201B00B9AA91 /* acq-encryption-visa-sign-certeq-rsa-ncaDS.crt in Resources */,
+				599A353B2E80201B00B9AA91 /* acq-root-certeq-prev-environment-new.crt in Resources */,
+				59F1EADA2EB5005700156E73 /* acq-encryption-jcb-sign-certeq-rsa-ncaDS.crt in Resources */,
+				59F1EADB2EB5005700156E73 /* acq-encryption-mc-sign-certeq-rsa-ncaDS.crt in Resources */,
+				59F1EADC2EB5005700156E73 /* acq-encryption-amex-sign-certeq-rsa-ncaDS.crt in Resources */,
+				59F1EADD2EB5005700156E73 /* acq-encryption-diners-sign-certeq-rsa-ncaDS.crt in Resources */,
 				592F9FE8278CCB7A00A8D538 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -409,29 +526,43 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5951A4752E5C2E4E0032269A /* Gr4vy3DSService.swift in Sources */,
 				59777A792E0AF8A300408EC5 /* JSONDecoder+Extensions.swift in Sources */,
 				59777AAD2E169BDD00408EC5 /* Gr4vyBuyersService.swift in Sources */,
 				59777A992E0DE30C00408EC5 /* Gr4vyCheckoutSessionService.swift in Sources */,
 				59777A972E0DDF9B00408EC5 /* Gr4vyPaymentOptionsService.swift in Sources */,
 				59777AB12E169D1700408EC5 /* Gr4vyBuyersPaymentMethods.swift in Sources */,
 				59777AA72E16821300408EC5 /* Gr4vyCardDetailsRequest.swift in Sources */,
+				59F1EABD2E9FE9DE00156E73 /* Gr4vyThreeDSConstants.swift in Sources */,
 				592C99DC2E264425004CECBE /* Version.swift in Sources */,
 				59777AAF2E169CD800408EC5 /* Gr4vyBuyersPaymentMethodsRequest.swift in Sources */,
-				59777AAB2E168BD400408EC5 /* Gr4vyCardDetailsResponse.swift in Sources */,
 				59FE69502722BB7A006C1C08 /* Gr4vy.swift in Sources */,
-				59777AB32E169DA300408EC5 /* Gr4vyBuyersPaymentMethodsResponse.swift in Sources */,
 				59777AA92E1684A800408EC5 /* Gr4vyCardDetails.swift in Sources */,
 				59777AA32E16813300408EC5 /* Gr4vyCardDetailsService.swift in Sources */,
+				59F1EAB22E9F6B8300156E73 /* Gr4vyBuyersPaymentMethodsResponse.swift in Sources */,
+				59F1EAB32E9F6B8300156E73 /* Gr4vyCardDetailsResponse.swift in Sources */,
 				5978B28A271C7F1300F5CC00 /* gr4vy_swift.docc in Sources */,
+				59F1EAC72E9FF25400156E73 /* Gr4vyTestCertificateConfiguration.swift in Sources */,
+				59F1EACB2EB4F76B00156E73 /* Gr4vyEmptyRequest.swift in Sources */,
+				59F1EAC82EA0000000156E73 /* Gr4vyAuthentication.swift in Sources */,
 				59777A942E0DACFE00408EC5 /* Gr4vySetup.swift in Sources */,
 				59777A742E0AF6CC00408EC5 /* Gr4vyPaymentOption.swift in Sources */,
 				59777A9D2E0DE6DB00408EC5 /* Gr4vyCardData.swift in Sources */,
 				59D09964274654C70086348B /* Gr4vyLogger.swift in Sources */,
+				59F1EABB2E9FE9B700156E73 /* Gr4vyThreeDSecureResponse.swift in Sources */,
+				59CB122B2E8044F10012745B /* Gr4vyThreeDSUiCustomization.swift in Sources */,
 				5986DBF42785EBD800D0A458 /* Gr4vyUtility.swift in Sources */,
+				59F1EAB72E9F6C1B00156E73 /* Gr4vyThreeDSecureAuthenticateRequest.swift in Sources */,
+				59F1EAC32E9FEAF200156E73 /* Gr4vyChallengeResponse.swift in Sources */,
+				59F1EAC42E9FEAF200156E73 /* Gr4vyThreeDSModels.swift in Sources */,
+				59F1EAC52E9FEAF200156E73 /* Gr4vyACSRenderingType.swift in Sources */,
 				59777A7B2E0B05E600408EC5 /* Gr4vyPaymentOptionRequest.swift in Sources */,
 				59777A9B2E0DE44C00408EC5 /* Gr4vyCheckoutSessionRequest.swift in Sources */,
 				59777AA12E167A1600408EC5 /* Gr4vyHTTPClient.swift in Sources */,
+				59F1EAC92EA23E5F00156E73 /* Gr4vyTokenizeResult.swift in Sources */,
+				59CB122D2E8044FA0012745B /* Gr4vyThreeDSUiCustomizationMapper.swift in Sources */,
 				59777AC92E1EF24E00408EC5 /* Gr4vySDK.swift in Sources */,
+				59F1EAB52E9F6BAB00156E73 /* Gr4vyVersioningResponse.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -441,12 +572,18 @@
 			files = (
 				59C64D252E1F8C1B0017C2F3 /* Gr4vyCardDataTests.swift in Sources */,
 				59C64D262E1F8C1B0017C2F3 /* Gr4vyPaymentOptionTests.swift in Sources */,
+				593D89B22EB5139A00C02A0A /* VersionTests.swift in Sources */,
 				59C64D382E1F8DE90017C2F3 /* Gr4vyBuyersPaymentMethodsResponseTests.swift in Sources */,
+				593D89B62EB513B400C02A0A /* Gr4vyThreeDSecureAuthenticateRequestTests.swift in Sources */,
 				59C64D442E1F8DFD0017C2F3 /* Gr4vyPaymentOptionRequestTests.swift in Sources */,
 				59C64D452E1F8DFD0017C2F3 /* Gr4vyCardDetailsRequestTests.swift in Sources */,
 				59C64D392E1F8DE90017C2F3 /* Gr4vyCardDetailsResponseTests.swift in Sources */,
 				59C64D3A2E1F8DE90017C2F3 /* Gr4vyCardDetailsTests.swift in Sources */,
+				593D89B02EB50ECF00C02A0A /* Gr4vy3DSServiceTests.swift in Sources */,
 				59C64D3B2E1F8DE90017C2F3 /* Gr4vySetupTests.swift in Sources */,
+				59F1EACF2EB4FF8B00156E73 /* Gr4vyAuthenticationTests.swift in Sources */,
+				59F1EAD02EB4FF8B00156E73 /* Gr4vyThreeDSUiCustomizationTests.swift in Sources */,
+				59F1EAD12EB4FF8B00156E73 /* Gr4vyTokenizeResultTests.swift in Sources */,
 				59C64D272E1F8C1B0017C2F3 /* Gr4vyBuyersPaymentMethodsTests.swift in Sources */,
 				59C64D3F2E1F8DF50017C2F3 /* Gr4vyCheckoutSessionServiceTests.swift in Sources */,
 				59C64D402E1F8DF50017C2F3 /* Gr4vyBuyersServiceTests.swift in Sources */,
@@ -454,12 +591,16 @@
 				59777B022E1F84FB00408EC5 /* Helpers.swift in Sources */,
 				59777AD72E1EF6E600408EC5 /* Gr4vyUtilityTests.swift in Sources */,
 				59777B0E2E1F862300408EC5 /* Gr4vySDKTests.swift in Sources */,
+				593D89B42EB513A700C02A0A /* Gr4vyVersioningResponseTests.swift in Sources */,
 				59777B0F2E1F862300408EC5 /* JSONDecoderExtensionsTests.swift in Sources */,
 				59C64D472E1F92D90017C2F3 /* Gr4vyTests.swift in Sources */,
+				59F1EAE02EB5066600156E73 /* Gr4vyThreeDSecureResponseTests.swift in Sources */,
 				59C64D2F2E1F8C220017C2F3 /* Gr4vyHTTPClientTests.swift in Sources */,
 				59777ADA2E1EF6E600408EC5 /* Gr4vyLoggerTests.swift in Sources */,
 				592C99DA2E256E4D004CECBE /* Gr4vyCardDetailsServiceTests.swift in Sources */,
 				59777B072E1F85FA00408EC5 /* Gr4vyCheckoutSessionRequestTests.swift in Sources */,
+				59F1EAD42EB4FF9500156E73 /* Gr4vyTestCertificateConfigurationTests.swift in Sources */,
+				59F1EAD52EB4FF9500156E73 /* Gr4vyThreeDSUiCustomizationMapperTests.swift in Sources */,
 				59777B082E1F85FA00408EC5 /* Gr4vyBuyersPaymentMethodsRequestTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -728,6 +869,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		5951A47C2E5C372B0032269A /* XCRemoteSwiftPackageReference "SPM" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ios-3ds-sdk/SPM.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.30;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5951A47D2E5C372B0032269A /* ThreeDS_SDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5951A47C2E5C372B0032269A /* XCRemoteSwiftPackageReference "SPM" */;
+			productName = ThreeDS_SDK;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 5978B27C271C7F1300F5CC00 /* Project object */;
 }

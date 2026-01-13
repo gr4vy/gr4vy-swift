@@ -156,6 +156,55 @@ class Gr4vyUtilityTests: XCTestCase {
         }
     }
 
+    // MARK: - Create Transaction URL Tests
+    func testCreateTransactionURLSandbox() throws {
+        let sessionId = "session-789"
+        let url = try Gr4vyUtility.createTransactionURL(from: sandboxSetup, checkoutSessionId: sessionId)
+
+        XCTAssertEqual(url.scheme, "https")
+        XCTAssertEqual(url.host, "api.sandbox.test-id.gr4vy.app")
+        XCTAssertEqual(url.path, "/checkout/sessions/\(sessionId)/three-d-secure-authenticate")
+    }
+
+    func testCreateTransactionURLProduction() throws {
+        let sessionId = "session-101"
+        let url = try Gr4vyUtility.createTransactionURL(from: productionSetup, checkoutSessionId: sessionId)
+
+        XCTAssertEqual(url.scheme, "https")
+        XCTAssertEqual(url.host, "api.prod-id.gr4vy.app")
+        XCTAssertEqual(url.path, "/checkout/sessions/\(sessionId)/three-d-secure-authenticate")
+    }
+
+    func testCreateTransactionURLEmptyGr4vyId() throws {
+        let invalidSetup = Gr4vySetup(
+            gr4vyId: "",
+            token: "test-token",
+            merchantId: "transaction-empty-merchant",
+            server: .sandbox,
+            timeout: 30
+        )
+
+        XCTAssertThrowsError(try Gr4vyUtility.createTransactionURL(from: invalidSetup, checkoutSessionId: "session-789")) { error in
+            XCTAssertTrue(error is Gr4vyError)
+            if case .badURL(let message) = error as? Gr4vyError {
+                XCTAssertEqual(message, "Gr4vy ID is empty")
+            } else {
+                XCTFail("Expected badURL error")
+            }
+        }
+    }
+
+    func testCreateTransactionURLEmptySessionId() throws {
+        XCTAssertThrowsError(try Gr4vyUtility.createTransactionURL(from: sandboxSetup, checkoutSessionId: "")) { error in
+            XCTAssertTrue(error is Gr4vyError)
+            if case .badURL(let message) = error as? Gr4vyError {
+                XCTAssertEqual(message, "Checkout session ID is empty")
+            } else {
+                XCTFail("Expected badURL error")
+            }
+        }
+    }
+
     // MARK: - Buyers Payment Methods URL Tests
     func testBuyersPaymentMethodsURLSandbox() throws {
         let url = try Gr4vyUtility.buyersPaymentMethodsURL(from: sandboxSetup)
@@ -204,6 +253,7 @@ class Gr4vyUtilityTests: XCTestCase {
         _ = try Gr4vyUtility.cardDetailsURL(from: productionSetup)
         _ = try Gr4vyUtility.buyersPaymentMethodsURL(from: sandboxSetup)
         _ = try Gr4vyUtility.checkoutSessionFieldsURL(from: productionSetup, checkoutSessionId: "test-session")
+        _ = try Gr4vyUtility.createTransactionURL(from: sandboxSetup, checkoutSessionId: "test-session-2")
 
         XCTAssertEqual(sandboxSetup.merchantId, "test-merchant")
         XCTAssertEqual(productionSetup.merchantId, "prod-merchant")
@@ -223,12 +273,14 @@ class Gr4vyUtilityTests: XCTestCase {
         let cardDetailsURL = try Gr4vyUtility.cardDetailsURL(from: setupWithNilMerchant)
         let buyersURL = try Gr4vyUtility.buyersPaymentMethodsURL(from: setupWithNilMerchant)
         let checkoutURL = try Gr4vyUtility.checkoutSessionFieldsURL(from: setupWithNilMerchant, checkoutSessionId: "session-123")
+        let transactionURL = try Gr4vyUtility.createTransactionURL(from: setupWithNilMerchant, checkoutSessionId: "session-456")
 
         // Verify URLs are generated correctly
         XCTAssertEqual(paymentOptionsURL.host, "api.sandbox.test-nil-merchant.gr4vy.app")
         XCTAssertEqual(cardDetailsURL.host, "api.sandbox.test-nil-merchant.gr4vy.app")
         XCTAssertEqual(buyersURL.host, "api.sandbox.test-nil-merchant.gr4vy.app")
         XCTAssertEqual(checkoutURL.host, "api.sandbox.test-nil-merchant.gr4vy.app")
+        XCTAssertEqual(transactionURL.host, "api.sandbox.test-nil-merchant.gr4vy.app")
 
         // Verify merchantId remains nil
         XCTAssertNil(setupWithNilMerchant.merchantId)
@@ -248,12 +300,14 @@ class Gr4vyUtilityTests: XCTestCase {
         let cardDetailsURL = try Gr4vyUtility.cardDetailsURL(from: setupWithSpecialMerchant)
         let buyersURL = try Gr4vyUtility.buyersPaymentMethodsURL(from: setupWithSpecialMerchant)
         let checkoutURL = try Gr4vyUtility.checkoutSessionFieldsURL(from: setupWithSpecialMerchant, checkoutSessionId: "session-456")
+        let transactionURL = try Gr4vyUtility.createTransactionURL(from: setupWithSpecialMerchant, checkoutSessionId: "session-789")
 
         // Verify URLs are generated correctly (merchantId doesn't affect URL generation)
         XCTAssertEqual(paymentOptionsURL.host, "api.special-test.gr4vy.app")
         XCTAssertEqual(cardDetailsURL.host, "api.special-test.gr4vy.app")
         XCTAssertEqual(buyersURL.host, "api.special-test.gr4vy.app")
         XCTAssertEqual(checkoutURL.host, "api.special-test.gr4vy.app")
+        XCTAssertEqual(transactionURL.host, "api.special-test.gr4vy.app")
 
         // Verify merchantId is preserved with special characters
         XCTAssertEqual(setupWithSpecialMerchant.merchantId, "merchant-with_special.chars!@#123")
@@ -311,6 +365,20 @@ class Gr4vyUtilityTests: XCTestCase {
 
         for (input, expectedEncoded) in testCases {
             let url = try Gr4vyUtility.checkoutSessionFieldsURL(from: sandboxSetup, checkoutSessionId: input)
+            XCTAssertTrue(url.path.contains(expectedEncoded),
+                          "Failed to properly encode '\(input)' - expected '\(expectedEncoded)' in path: \(url.path)")
+        }
+    }
+
+    func testCreateTransactionURLEncodingSpecialCharacters() throws {
+        let testCases = [
+            ("session-with-spaces", "session-with-spaces"),
+            ("session%20encoded", "session%2520encoded"),
+            ("session#fragment", "session%23fragment"),
+        ]
+
+        for (input, expectedEncoded) in testCases {
+            let url = try Gr4vyUtility.createTransactionURL(from: sandboxSetup, checkoutSessionId: input)
             XCTAssertTrue(url.path.contains(expectedEncoded),
                           "Failed to properly encode '\(input)' - expected '\(expectedEncoded)' in path: \(url.path)")
         }
@@ -448,7 +516,7 @@ class Gr4vyUtilityTests: XCTestCase {
             timeout: 30
         )
 
-        let methods: [() throws -> URL] = [ { try Gr4vyUtility.paymentOptionsURL(from: invalidSetup) }, { try Gr4vyUtility.cardDetailsURL(from: invalidSetup) }, { try Gr4vyUtility.buyersPaymentMethodsURL(from: invalidSetup) }, { try Gr4vyUtility.checkoutSessionFieldsURL(from: invalidSetup, checkoutSessionId: "valid-session") }
+        let methods: [() throws -> URL] = [ { try Gr4vyUtility.paymentOptionsURL(from: invalidSetup) }, { try Gr4vyUtility.cardDetailsURL(from: invalidSetup) }, { try Gr4vyUtility.buyersPaymentMethodsURL(from: invalidSetup) }, { try Gr4vyUtility.checkoutSessionFieldsURL(from: invalidSetup, checkoutSessionId: "valid-session") }, { try Gr4vyUtility.createTransactionURL(from: invalidSetup, checkoutSessionId: "valid-session") }
         ]
 
         for method in methods {

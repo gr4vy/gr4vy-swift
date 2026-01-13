@@ -53,7 +53,7 @@ final class Gr4vySDKTests: XCTestCase {
 
         // Test that user agent contains expected components
         XCTAssertTrue(userAgent.contains("Gr4vy-iOS-SDK"), "User agent should contain SDK name")
-        XCTAssertTrue(userAgent.contains("1.0.0-beta.1"), "User agent should contain version")
+        XCTAssertTrue(userAgent.contains("1.0.0"), "User agent should contain version")
         XCTAssertTrue(userAgent.contains("iOS"), "User agent should contain platform")
 
         // Test user agent format

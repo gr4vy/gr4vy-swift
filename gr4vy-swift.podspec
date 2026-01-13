@@ -22,4 +22,10 @@ Pod::Spec.new do |s|
   
   # Frameworks
   s.frameworks = 'Foundation'
+  
+  # Dependencies
+  # Note: Netcetera ThreeDS_SDK is distributed via SPM at https://github.com/ios-3ds-sdk/SPM.git
+  # CocoaPods users must manually integrate the Netcetra 3DS SDK (version 2.5.30)
+  # or use Swift Package Manager instead for automatic dependency resolution.
+  s.dependency 'ThreeDS_SDK', '2.5.30'
 end

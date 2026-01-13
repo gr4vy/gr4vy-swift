@@ -8,7 +8,6 @@
 import Foundation
 
 public struct Gr4vyCardData: Codable {
-
     // MARK: - Properties
     public let paymentMethod: Gr4vyPaymentMethod
 

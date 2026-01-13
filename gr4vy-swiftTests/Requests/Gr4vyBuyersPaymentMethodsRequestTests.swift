@@ -338,7 +338,7 @@ final class Gr4vyBuyersPaymentMethodsRequestTests: XCTestCase {
         XCTAssertEqual(request.paymentMethods.buyerExternalIdentifier, "external_456$%^")
     }
 
-    func testBuyersPaymentMethodsRequestEquality() {
+    func testBuyersPaymentMethodsRequestEquality() throws {
         // Given
         let paymentMethods1 = Gr4vyBuyersPaymentMethods(
             buyerId: "buyer_123",
@@ -370,10 +370,11 @@ final class Gr4vyBuyersPaymentMethodsRequestTests: XCTestCase {
         XCTAssertEqual(request1.paymentMethods.country, request2.paymentMethods.country)
         XCTAssertEqual(request1.paymentMethods.currency, request2.paymentMethods.currency)
 
-        // Verify encoding equality
+        // Verify encoding produces valid JSON with same content
         let encoder = JSONEncoder()
-        let data1 = try? encoder.encode(request1)
-        let data2 = try? encoder.encode(request2)
+        encoder.outputFormatting = .sortedKeys // Ensure deterministic ordering
+        let data1 = try encoder.encode(request1)
+        let data2 = try encoder.encode(request2)
 
         XCTAssertNotNil(data1)
         XCTAssertNotNil(data2)

@@ -14,7 +14,7 @@ public final class Gr4vyBuyersService {
     let paymentMethods: Gr4vyBuyersPaymentMethodsService
     
     // MARK: - Initializer
-    public init(setup: Gr4vySetup, debugMode: Bool = false, session: URLSession = .shared) {
+    public init(setup: Gr4vySetup, debugMode: Bool = false, session: URLSessionProtocol = URLSession.shared) {
         self.paymentMethods = Gr4vyBuyersPaymentMethodsService(setup: setup, debugMode: debugMode, session: session)
     }
     
@@ -32,7 +32,7 @@ public final class Gr4vyBuyersPaymentMethodsService {
     public let debugMode: Bool
     
     // MARK: - Initializer
-    public init(setup: Gr4vySetup, debugMode: Bool = false, session: URLSession = .shared) {
+    public init(setup: Gr4vySetup, debugMode: Bool = false, session: URLSessionProtocol = URLSession.shared) {
         self.configuration = Gr4vyHTTPConfiguration(setup: setup, debugMode: debugMode, session: session)
         self.httpClient = Gr4vyHTTPClientFactory.create(setup: setup, debugMode: debugMode, session: session)
         self.debugMode = debugMode

@@ -8,10 +8,6 @@
 import Foundation
 @testable import gr4vy_swift
 
-///
-
-///
-
 final class MockHTTPClient: Gr4vyHTTPClientProtocol {
     // MARK: – Fixtures tailored per test
     var error: Error?
@@ -68,5 +64,31 @@ private struct AnyEncodable: Encodable {
 
     func encode(to encoder: Encoder) throws {
         try encodeFunc(encoder)
+    }
+}
+
+// MARK: - Mock URLSession for Testing
+class MockURLSession: URLSessionProtocol {
+    var mockData: Data?
+    var mockResponse: URLResponse?
+    var mockError: Error?
+    var lastRequest: URLRequest?
+
+    func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        lastRequest = request
+
+        if let error = mockError {
+            throw error
+        }
+
+        let data = mockData ?? Data()
+        let response = mockResponse ?? HTTPURLResponse(
+            url: request.url!,
+            statusCode: 200,
+            httpVersion: nil,
+            headerFields: nil
+        )!
+
+        return (data, response)
     }
 }

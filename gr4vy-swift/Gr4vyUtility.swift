@@ -77,6 +77,56 @@ public struct Gr4vyUtility {
         return url
     }
     
+    public static func versioningURL(from setup: Gr4vySetup, checkoutSessionId: String) throws -> URL {
+        let validatedGr4vyId = try validateGr4vyId(setup.gr4vyId)
+
+        guard !checkoutSessionId.isEmpty else {
+            throw Gr4vyError.badURL("Checkout session ID is empty")
+        }
+
+        // URL-encode the checkout session ID to prevent injection attacks
+        guard let encodedSessionId = urlEncodedPathComponent(checkoutSessionId) else {
+            throw Gr4vyError.badURL("Failed to URL-encode perform versioning session ID")
+        }
+
+        let subdomainPrefix = setup.server == .sandbox ? "sandbox." : ""
+
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "api.\(subdomainPrefix)\(validatedGr4vyId).gr4vy.app"
+        components.path = "/checkout/sessions/\(encodedSessionId)/three-d-secure-version"
+
+        guard let url = components.url else {
+            throw Gr4vyError.badURL("Failed to construct perform versioning URL")
+        }
+        return url
+    }
+    
+    public static func createTransactionURL(from setup: Gr4vySetup, checkoutSessionId: String) throws -> URL {
+        let validatedGr4vyId = try validateGr4vyId(setup.gr4vyId)
+
+        guard !checkoutSessionId.isEmpty else {
+            throw Gr4vyError.badURL("Checkout session ID is empty")
+        }
+
+        // URL-encode the checkout session ID to prevent injection attacks
+        guard let encodedSessionId = urlEncodedPathComponent(checkoutSessionId) else {
+            throw Gr4vyError.badURL("Failed to URL-encode 3DS authentication session ID")
+        }
+
+        let subdomainPrefix = setup.server == .sandbox ? "sandbox." : ""
+
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "api.\(subdomainPrefix)\(validatedGr4vyId).gr4vy.app"
+        components.path = "/checkout/sessions/\(encodedSessionId)/three-d-secure-authenticate"
+
+        guard let url = components.url else {
+            throw Gr4vyError.badURL("Failed to construct 3DS authentication URL")
+        }
+        return url
+    }
+    
     public static func cardDetailsURL(from setup: Gr4vySetup) throws -> URL {
         let validatedGr4vyId = try validateGr4vyId(setup.gr4vyId)
         let subdomainPrefix = setup.server == .sandbox ? "sandbox." : ""
