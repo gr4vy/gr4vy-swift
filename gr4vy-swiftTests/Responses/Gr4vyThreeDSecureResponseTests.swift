@@ -89,6 +89,49 @@ final class Gr4vyThreeDSecureResponseTests: XCTestCase {
         XCTAssertNil(response.cardholderInfo)
     }
 
+    func testDecodingChallengeResponseWithMissingDeviceUserInterfaceMode() throws {
+        // Given - Real-world challenge response without deviceUserInterfaceMode
+        let json = """
+        {
+            "indicator": "CHALLENGE",
+            "transaction_status": "C",
+            "challenge": {
+                "server_transaction_id": "dbc51a89-48d9-2324-82cf-89263d2710a1",
+                "acs_transaction_id": "99caa473-57db-1212-9ecc-02078ee5007c",
+                "acs_reference_number": "XXX",
+                "acs_rendering_type": {
+                    "acsInterface": "01",
+                    "acsUiTemplate": "04"
+                },
+                "acs_signed_content": "XXX.XXXXXX"
+            },
+            "cardholder_info": null
+        }
+        """
+
+        // When
+        let response = try decode(json)
+
+        // Then
+        XCTAssertEqual(response.indicator, "CHALLENGE")
+        XCTAssertFalse(response.isFrictionless)
+        XCTAssertTrue(response.isChallenge)
+        XCTAssertFalse(response.isError)
+        XCTAssertNotNil(response.challenge)
+        XCTAssertEqual(response.transactionStatus, "C")
+        XCTAssertNil(response.cardholderInfo)
+        
+        // Verify challenge details
+        let challenge = try XCTUnwrap(response.challenge)
+        XCTAssertEqual(challenge.serverTransactionId, "dbc51a89-48d9-2324-82cf-89263d2710a1")
+        XCTAssertEqual(challenge.acsTransactionId, "99caa473-57db-1212-9ecc-02078ee5007c")
+        XCTAssertEqual(challenge.acsReferenceNumber, "XXX")
+        XCTAssertEqual(challenge.acsRenderingType.acsInterface, "01")
+        XCTAssertEqual(challenge.acsRenderingType.acsUiTemplate, "04")
+        XCTAssertNil(challenge.acsRenderingType.deviceUserInterfaceMode)
+        XCTAssertEqual(challenge.acsSignedContent, "XXX.XXXXXX")
+    }
+
     func testDecodingErrorResponse() throws {
         // Given
         let json = """

@@ -18,7 +18,7 @@ struct Gr4vyACSRenderingType: Codable {
     let acsUiTemplate: String
     
     /// Device user interface mode (e.g., "01" for text, "02" for single select, etc.)
-    let deviceUserInterfaceMode: String
+    let deviceUserInterfaceMode: String?
     
     // MARK: - CodingKeys
     

@@ -67,7 +67,7 @@ Add the following to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.0.0-beta.2")
+    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.0.0-beta.3")
 ]
 ```
 
@@ -76,7 +76,7 @@ dependencies: [
 Add the following to your `Podfile`:
 
 ```ruby
-pod 'gr4vy-swift', '~> 1.0.0-beta.2'
+pod 'gr4vy-swift', '~> 1.0.0-beta.3'
 ```
 
 Then run:
@@ -377,7 +377,7 @@ gr4vy.paymentOptions.list(request: request) { result in
 
 ### Get card details
 
-Get details about a particular card based on it's BIN, the checkout country/currency, and more.
+Get details about a particular card based on its BIN, the checkout country/currency, and more.
 
 ```swift
 // Create card details object
@@ -418,7 +418,7 @@ gr4vy.cardDetails.get(request: request) { result in
 
 ### List buyer's payment methods
 
-List all the sotred payment methods for a buyer, filtered by the checkout's currency and country.
+List all the stored payment methods for a buyer, filtered by the checkout's currency and country.
 
 ```swift
 // Create payment methods criteria

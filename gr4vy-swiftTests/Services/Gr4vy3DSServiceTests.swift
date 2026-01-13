@@ -1228,6 +1228,54 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         XCTAssertEqual(dict["deviceUserInterfaceMode"] as? String, "02")
     }
     
+    func testACSRenderingTypeDecodingWithMissingDeviceUserInterfaceMode() throws {
+        // Given - ACS rendering type JSON without deviceUserInterfaceMode
+        let acsJSON = """
+        {
+            "acsInterface": "01",
+            "acsUiTemplate": "04"
+        }
+        """
+        
+        guard let data = acsJSON.data(using: .utf8) else {
+            XCTFail("Failed to create data from JSON string")
+            return
+        }
+        
+        // When - Decode the ACS rendering type
+        let decoder = JSONDecoder()
+        let acsRenderingType = try decoder.decode(Gr4vyACSRenderingType.self, from: data)
+        
+        // Then - Verify fields are decoded correctly and deviceUserInterfaceMode is nil
+        XCTAssertEqual(acsRenderingType.acsInterface, "01")
+        XCTAssertEqual(acsRenderingType.acsUiTemplate, "04")
+        XCTAssertNil(acsRenderingType.deviceUserInterfaceMode)
+    }
+    
+    func testACSRenderingTypeEncodingWithNilDeviceUserInterfaceMode() throws {
+        // Given - ACS rendering type instance with nil deviceUserInterfaceMode
+        let acsRenderingType = Gr4vyACSRenderingType(
+            acsInterface: "01",
+            acsUiTemplate: "03",
+            deviceUserInterfaceMode: nil
+        )
+        
+        // When - Encode to JSON
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(acsRenderingType)
+        
+        // Then - Verify encoding
+        let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
+        guard let dict = jsonObject as? [String: Any] else {
+            XCTFail("Failed to parse encoded JSON")
+            return
+        }
+        
+        XCTAssertEqual(dict["acsInterface"] as? String, "01")
+        XCTAssertEqual(dict["acsUiTemplate"] as? String, "03")
+        XCTAssertNil(dict["deviceUserInterfaceMode"])
+    }
+    
     // MARK: - Authentication Result Tests
     
     func testAuthenticationResultFrictionless() throws {
