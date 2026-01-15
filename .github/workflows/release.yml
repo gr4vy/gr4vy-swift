@@ -1,0 +1,85 @@
+name: gr4vy-Swift SDK release workflow
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+jobs:
+  release:
+    runs-on: macos-26
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "26" 
+        
+      - name: Show Xcode version
+        run: xcodebuild -version
+        
+      - name: Clean derived data and build artifacts
+        run: |
+          # Remove all derived data
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf ~/Library/Caches/com.apple.dt.Xcode
+          
+          # Clean Xcode build folder for the main scheme only
+          xcodebuild clean -scheme gr4vy-swift -configuration Release
+          
+          # Clean any remaining build artifacts
+          find . -name "*.build" -type d -exec rm -rf {} + 2>/dev/null || true
+          find . -name "*.xcuserdata" -type d -exec rm -rf {} + 2>/dev/null || true
+      
+      - name: Resolve SPM (prewarm)
+        run: xcodebuild -resolvePackageDependencies -scheme gr4vy-swift
+
+      - name: Find and Boot Latest iOS Simulator
+        id: simulator
+        run: |
+          # Get the latest available iOS simulator
+          SIMULATOR_ID=$(xcrun simctl list devices available | grep -i "iphone" | grep -v "unavailable" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+          if [ -n "$SIMULATOR_ID" ]; then
+            echo "Found simulator ID: $SIMULATOR_ID"
+            xcrun simctl boot "$SIMULATOR_ID" 2>/dev/null || echo "Simulator already booted"
+            echo "id=$SIMULATOR_ID" >> $GITHUB_OUTPUT
+          else
+            echo "No simulator found, using default iPhone 15"
+            echo "id=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build SDK (Release)
+        run: |
+          xcodebuild build \
+            -scheme gr4vy-swift \
+            -sdk iphonesimulator \
+            -configuration Release \
+            ENABLE_TESTABILITY=YES \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO
+      
+      - name: Run tests
+        run: |
+          SIMULATOR_ID="${{ steps.simulator.outputs.id }}"
+          if [ -n "$SIMULATOR_ID" ]; then
+            DESTINATION="platform=iOS Simulator,id=$SIMULATOR_ID"
+          else
+            DESTINATION="platform=iOS Simulator,name=iPhone 15"
+          fi
+          xcodebuild test \
+            -scheme gr4vy-swiftTests \
+            -destination "$DESTINATION" \
+            -configuration Release \
+            ENABLE_TESTABILITY=YES \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Create Draft Release
+        uses: ncipollo/release-action@v1
+        with:
+          draft: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+

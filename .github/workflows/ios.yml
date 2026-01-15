@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: macos-15
+    runs-on: macos-26
     
     steps:
     - name: Checkout code
@@ -17,7 +17,7 @@ jobs:
     - name: Set up Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: "16.4" 
+        xcode-version: "26" 
       
     - name: Show Xcode version
       run: xcodebuild -version
@@ -53,20 +53,40 @@ jobs:
     - name: Resolve SPM (prewarm)
       run: xcodebuild -resolvePackageDependencies -scheme gr4vy-swift
 
+    - name: Find and Boot Latest iOS Simulator
+      id: simulator
+      run: |
+        # Get the latest available iOS simulator
+        SIMULATOR_ID=$(xcrun simctl list devices available | grep -i "iphone" | grep -v "unavailable" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+        if [ -n "$SIMULATOR_ID" ]; then
+          echo "Found simulator ID: $SIMULATOR_ID"
+          xcrun simctl boot "$SIMULATOR_ID" 2>/dev/null || echo "Simulator already booted"
+          echo "id=$SIMULATOR_ID" >> $GITHUB_OUTPUT
+        else
+          echo "No simulator found, using default iPhone 15"
+          echo "id=" >> $GITHUB_OUTPUT
+        fi
+
     - name: Build SDK
       run: |
         xcodebuild build \
           -scheme gr4vy-swift \
-          -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+          -sdk iphonesimulator \
           -configuration Debug \
           CODE_SIGN_IDENTITY="" \
           CODE_SIGNING_REQUIRED=NO
     
     - name: Run tests
       run: |
+        SIMULATOR_ID="${{ steps.simulator.outputs.id }}"
+        if [ -n "$SIMULATOR_ID" ]; then
+          DESTINATION="platform=iOS Simulator,id=$SIMULATOR_ID"
+        else
+          DESTINATION="platform=iOS Simulator,name=iPhone 15"
+        fi
         xcodebuild test \
           -scheme gr4vy-swiftTests \
-          -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+          -destination "$DESTINATION" \
           -configuration Debug \
           CODE_SIGN_IDENTITY="" \
           CODE_SIGNING_REQUIRED=NO

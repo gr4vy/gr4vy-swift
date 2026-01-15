@@ -72,7 +72,7 @@ Once you push the tag, GitHub Actions automatically:
 1. **Triggers the Release Workflow** (`.github/workflows/release.yml`)
 2. **Sets up the build environment** (Xcode, Swift toolchain)
 3. **Validates the project structure**
-4. **Runs tests** (`xcodebuild -scheme gr4vy-swift test`)
+4. **Runs tests** (`xcodebuild -scheme gr4vy-swiftTests test`)
 5. **Builds release framework** (`xcodebuild -scheme gr4vy-swift build`)
 6. **Creates a draft GitHub release**
 
