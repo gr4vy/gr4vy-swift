@@ -76,7 +76,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
         // Verify user agent header
         let userAgent = mockSession.lastRequest?.value(forHTTPHeaderField: "User-Agent")
         XCTAssertNotNil(userAgent)
-        XCTAssertTrue(userAgent!.contains("Gr4vy-iOS-SDK/1.0.0"))
+        XCTAssertTrue(userAgent!.contains("Gr4vy-iOS-SDK/1.0.1"))
         XCTAssertTrue(userAgent!.contains("iOS"))
 
         // Verify body

@@ -349,9 +349,9 @@ class JSONDecoderExtensionsTests: XCTestCase {
         XCTAssertEqual(result?.country, "US")
     }
 
-    func testDecodeIfPresentWithInvalidGr4vyCardDetails() throws {
-        // Given
-        let invalidCardDetailsJSON = """
+    func testDecodeIfPresentWithValidGr4vyCardDetails() throws {
+        // Given - This is actually valid JSON (has required id field)
+        let validCardDetailsJSON = """
         {
             "type": "card_details",
             "id": "cd_test_123"
@@ -359,10 +359,12 @@ class JSONDecoderExtensionsTests: XCTestCase {
         """.data(using: .utf8)!
 
         // When
-        let result = decoder.decodeIfPresent(Gr4vyCardDetailsResponse.self, from: invalidCardDetailsJSON)
+        let result = decoder.decodeIfPresent(Gr4vyCardDetailsResponse.self, from: validCardDetailsJSON)
 
-        // Then
-        XCTAssertNil(result)
+        // Then - Should decode successfully since id is present
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.id, "cd_test_123")
+        XCTAssertEqual(result?.type, "card_details")
     }
 
     // MARK: - Comparison with Standard Decode Tests

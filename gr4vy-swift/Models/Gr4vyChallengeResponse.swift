@@ -12,19 +12,19 @@ struct Gr4vyChallengeResponse: Codable {
     // MARK: - Properties
     
     /// 3DS Server transaction identifier
-    let serverTransactionId: String
+    let serverTransactionId: String?
     
     /// ACS (Access Control Server) transaction identifier
-    let acsTransactionId: String
+    let acsTransactionId: String?
     
     /// ACS reference number for the transaction
-    let acsReferenceNumber: String
+    let acsReferenceNumber: String?
     
     /// ACS rendering type configuration for challenge UI
-    let acsRenderingType: Gr4vyACSRenderingType
+    let acsRenderingType: Gr4vyACSRenderingType?
     
     /// ACS signed content for authentication
-    let acsSignedContent: String
+    let acsSignedContent: String?
     
     // MARK: - CodingKeys
     

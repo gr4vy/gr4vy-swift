@@ -46,8 +46,8 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
         XCTAssertEqual(option.type, "payment-option")
         XCTAssertEqual(option.method, "card")
         XCTAssertEqual(option.mode, "test")
-        XCTAssertTrue(option.canStorePaymentMethod)
-        XCTAssertFalse(option.canDelayCapture)
+        XCTAssertEqual(option.canStorePaymentMethod, true)
+        XCTAssertEqual(option.canDelayCapture, false)
         XCTAssertEqual(option.iconUrl, "https://example.com/icon.png")
         XCTAssertEqual(option.label, "Visa or Mastercard")
 
@@ -232,8 +232,8 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
         XCTAssertEqual(firstItem.type, "payment-option")
         XCTAssertEqual(firstItem.method, "card")
         XCTAssertEqual(firstItem.mode, "test")
-        XCTAssertTrue(firstItem.canStorePaymentMethod)
-        XCTAssertFalse(firstItem.canDelayCapture)
+        XCTAssertEqual(firstItem.canStorePaymentMethod, true)
+        XCTAssertEqual(firstItem.canDelayCapture, false)
 
         guard case .wallet(let ctx1) = firstItem.context else {
             return XCTFail("Expected WalletContext for first item")
@@ -246,14 +246,14 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
         XCTAssertEqual(secondItem.type, "payment-option") // Default value
         XCTAssertEqual(secondItem.method, "bank_redirect")
         XCTAssertEqual(secondItem.mode, "live")
-        XCTAssertFalse(secondItem.canStorePaymentMethod)
-        XCTAssertTrue(secondItem.canDelayCapture)
+        XCTAssertEqual(secondItem.canStorePaymentMethod, false)
+        XCTAssertEqual(secondItem.canDelayCapture, true)
 
         guard case .payment(let ctx2) = secondItem.context else {
             return XCTFail("Expected PaymentContext for second item")
         }
-        XCTAssertTrue(ctx2.redirectRequiresPopup)
-        XCTAssertFalse(ctx2.requiresTokenizedRedirectPopup)
+        XCTAssertEqual(ctx2.redirectRequiresPopup, true)
+        XCTAssertEqual(ctx2.requiresTokenizedRedirectPopup, false)
     }
 
     func testPaymentOptionsWrapperWithEmptyItems() throws {
@@ -305,8 +305,8 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
         guard case .payment(let ctx) = option.context else {
             return XCTFail("Expected PaymentContext due to redirect_requires_popup field")
         }
-        XCTAssertFalse(ctx.redirectRequiresPopup)
-        XCTAssertTrue(ctx.requiresTokenizedRedirectPopup)
+        XCTAssertEqual(ctx.redirectRequiresPopup, false)
+        XCTAssertEqual(ctx.requiresTokenizedRedirectPopup, true)
     }
 
     func testContextEnumWithGatewayFieldsOnly() throws {
@@ -441,7 +441,7 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
             XCTFail("Third item should have PaymentContext")
             return
         }
-        XCTAssertTrue(paymentCtx.redirectRequiresPopup)
+        XCTAssertEqual(paymentCtx.redirectRequiresPopup, true)
         XCTAssertEqual(paymentCtx.approvalUI?.height, "800px")
         XCTAssertEqual(paymentCtx.requiredFields?["account_number"], true)
         XCTAssertEqual(paymentCtx.requiredFields?["account_type"], false)
@@ -454,7 +454,7 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
             "invalid json",
             "[]",
             "null",
-            "{\"method\": null}",
+            // Note: {"method": null} is now valid since method is optional
             "{\"method\": 123}",
             "{\"can_store_payment_method\": \"not_a_boolean\"}",
         ]
@@ -531,24 +531,27 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
         XCTAssertEqual(option.type, "payment-option")
         XCTAssertEqual(option.method, "card")
         XCTAssertEqual(option.mode, "live")
-        XCTAssertFalse(option.canStorePaymentMethod)
-        XCTAssertTrue(option.canDelayCapture)
+        XCTAssertEqual(option.canStorePaymentMethod, false)
+        XCTAssertEqual(option.canDelayCapture, true)
         XCTAssertNil(option.iconUrl)
         XCTAssertNil(option.label)
         // context defaults to WalletContext with required fields missing, so decode should throw.
         // If model guarantees nil instead, adjust accordingly.
     }
 
-    func testDecodeFailsWithMissingRequiredFields() {
+    func testDecodeSucceedsWithMissingOptionalFields() throws {
+        // All fields except type (which has a default) are optional
         let json = """
         {
-            "type": "payment-option",
-            "mode": "test",
-            "can_store_payment_method": true,
-            "can_delay_capture": false
+            "type": "payment-option"
         }
         """
-        XCTAssertThrowsError(try decode(json))
+        let option = try decode(json)
+        XCTAssertEqual(option.type, "payment-option")
+        XCTAssertNil(option.method)
+        XCTAssertNil(option.mode)
+        XCTAssertNil(option.canStorePaymentMethod)
+        XCTAssertNil(option.canDelayCapture)
     }
 
     func testDecodeDefaultsTypeToPaymentOption() throws {
@@ -594,7 +597,8 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
         XCTAssertEqual(ctx.supportedSchemes, ["visa", "mastercard"])
     }
 
-    func testWalletContextFailsWhenMissingRequiredFields() {
+    func testWalletContextSucceedsWithMissingOptionalFields() throws {
+        // All WalletContext fields are optional
         let json = #"""
             {
             "method": "card",
@@ -606,7 +610,12 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
             }
             }
         """#
-        XCTAssertThrowsError(try decode(json))
+        let option = try decode(json)
+        guard case .wallet(let ctx) = option.context else {
+            return XCTFail("Expected WalletContext")
+        }
+        XCTAssertEqual(ctx.merchantName, "No Schemes")
+        XCTAssertNil(ctx.supportedSchemes)
     }
 
     // ------------------------------
@@ -637,7 +646,8 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
         XCTAssertEqual(ctx.supportedSchemes, ["visa"])
     }
 
-    func testGoogleContextFailsWhenMissingRequiredFields() {
+    func testGoogleContextSucceedsWithMissingOptionalFields() throws {
+        // All GoogleContext fields are optional
         let json = #"""
             {
             "method": "card",
@@ -651,14 +661,21 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
             }
             }
         """#
-        XCTAssertThrowsError(try decode(json))
+        let option = try decode(json)
+        guard case .google(let ctx) = option.context else {
+            return XCTFail("Expected GoogleContext")
+        }
+        XCTAssertEqual(ctx.merchantName, "Bad GPay")
+        XCTAssertEqual(ctx.supportedSchemes, ["visa"])
+        XCTAssertEqual(ctx.gateway, "gr4vy")
+        XCTAssertNil(ctx.gatewayMerchantId)
     }
 
     // ------------------------------
     // PaymentContext
     // ------------------------------
 
-    func testPaymentContextDecodesWithOnlyRequiredFields() throws {
+    func testPaymentContextDecodesWithOptionalFields() throws {
         let json = #"""
             {
             "method": "bank_redirect",
@@ -675,8 +692,8 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
         guard case .payment(let ctx) = option.context else {
             return XCTFail("Expected PaymentContext")
         }
-        XCTAssertFalse(ctx.redirectRequiresPopup)
-        XCTAssertTrue(ctx.requiresTokenizedRedirectPopup)
+        XCTAssertEqual(ctx.redirectRequiresPopup, false)
+        XCTAssertEqual(ctx.requiresTokenizedRedirectPopup, true)
         XCTAssertNil(ctx.approvalUI)
         XCTAssertNil(ctx.requiredFields)
     }
@@ -711,7 +728,8 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
         XCTAssertEqual(ctx.requiredFields?["postal_code"], false)
     }
 
-    func testPaymentContextFailsWhenMissingRequiredFields() {
+    func testPaymentContextSucceedsWithEmptyContext() throws {
+        // All PaymentContext fields are optional, so empty context should decode as wallet context (default)
         let json = #"""
             {
             "method": "bank_redirect",
@@ -722,7 +740,13 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
             }
             }
         """#
-        XCTAssertThrowsError(try decode(json))
+        let option = try decode(json)
+        // Empty context defaults to wallet context
+        guard case .wallet(let ctx) = option.context else {
+            return XCTFail("Expected WalletContext for empty context")
+        }
+        XCTAssertNil(ctx.merchantName)
+        XCTAssertNil(ctx.supportedSchemes)
     }
 
     // ------------------------------
@@ -806,7 +830,8 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
     // Root model guard
     // ------------------------------
 
-    func testPaymentOptionFailsWhenRootRequiredFieldsMissing() {
+    func testPaymentOptionSucceedsWithMissingTypeField() throws {
+        // type has a default value, so missing it should succeed
         let json = #"""
             {
             "mode": "test",
@@ -818,6 +843,178 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
             }
             }
         """#
-        XCTAssertThrowsError(try decode(json))
+        let option = try decode(json)
+        XCTAssertEqual(option.type, "payment-option") // Should default to "payment-option"
+        XCTAssertEqual(option.mode, "test")
+    }
+    
+    // ------------------------------
+    // Nested address structure test
+    // ------------------------------
+    
+    func testPaymentContextWithNestedAddressRequiredFields() throws {
+        let json = #"""
+            {
+            "type": "payment-option",
+            "method": "card",
+            "mode": "card",
+            "label": "Carte",
+            "can_store_payment_method": true,
+            "can_delay_capture": true,
+            "context": {
+            "redirect_requires_popup": false,
+            "requires_tokenized_redirect_popup": false,
+            "approval_ui": {
+            "height": "589px",
+            "width": "500px"
+            },
+            "required_fields": {
+            "address": {
+            "postal_code": true,
+            "line1": true,
+            "country": true,
+            "city": true
+            }
+            }
+            }
+            }
+        """#
+        let option = try decode(json)
+        guard case .payment(let ctx) = option.context else {
+            return XCTFail("Expected PaymentContext")
+        }
+        
+        let requiredFields = try XCTUnwrap(ctx.requiredFields)
+        let address = try XCTUnwrap(requiredFields.address)
+        
+        XCTAssertEqual(address.postalCode, true)
+        XCTAssertEqual(address.line1, true)
+        XCTAssertEqual(address.country, true)
+        XCTAssertEqual(address.city, true)
+        XCTAssertNil(address.organization)
+        XCTAssertNil(address.houseNumberOrName)
+        XCTAssertNil(address.line2)
+        XCTAssertNil(address.state)
+        XCTAssertNil(address.stateCode)
+    }
+    
+    func testPaymentContextWithTopLevelAndNestedAddressFields() throws {
+        let json = #"""
+            {
+            "type": "payment-option",
+            "method": "card",
+            "mode": "card",
+            "label": "Carte",
+            "can_store_payment_method": true,
+            "can_delay_capture": true,
+            "context": {
+            "redirect_requires_popup": false,
+            "required_fields": {
+            "email_address": true,
+            "first_name": true,
+            "last_name": true,
+            "tax_id": false,
+            "address": {
+            "postal_code": true,
+            "line1": true,
+            "country": true,
+            "city": true,
+            "organization": false,
+            "house_number_or_name": true,
+            "line2": false,
+            "state": true,
+            "state_code": false
+            },
+            "account_number": true
+            }
+            }
+            }
+        """#
+        let option = try decode(json)
+        guard case .payment(let ctx) = option.context else {
+            return XCTFail("Expected PaymentContext")
+        }
+        
+        let requiredFields = try XCTUnwrap(ctx.requiredFields)
+        
+        // Test top-level fields
+        XCTAssertEqual(requiredFields.emailAddress, true)
+        XCTAssertEqual(requiredFields.firstName, true)
+        XCTAssertEqual(requiredFields.lastName, true)
+        XCTAssertEqual(requiredFields.taxId, false)
+        
+        // Test nested address fields
+        let address = try XCTUnwrap(requiredFields.address)
+        XCTAssertEqual(address.postalCode, true)
+        XCTAssertEqual(address.line1, true)
+        XCTAssertEqual(address.country, true)
+        XCTAssertEqual(address.city, true)
+        XCTAssertEqual(address.organization, false)
+        XCTAssertEqual(address.houseNumberOrName, true)
+        XCTAssertEqual(address.line2, false)
+        XCTAssertEqual(address.state, true)
+        XCTAssertEqual(address.stateCode, false)
+        
+        // Test dynamic field access via subscript
+        XCTAssertEqual(requiredFields["account_number"], true)
+        XCTAssertEqual(requiredFields["email_address"], true)
+        XCTAssertEqual(requiredFields["first_name"], true)
+    }
+    
+    func testPaymentContextWithExactAPIResponseFormat() throws {
+        // This test matches the exact API response format from the user's issue
+        let json = #"""
+            {
+            "type": "payment-option",
+            "method": "card",
+            "icon_url": "https://api.sandbox.partners.gr4vy.app/assets/icons/payment-methods/card.svg",
+            "mode": "card",
+            "label": "Carte",
+            "can_store_payment_method": true,
+            "can_delay_capture": true,
+            "context": {
+            "approval_ui": {
+            "height": "589px",
+            "width": "500px"
+            },
+            "required_fields": {
+            "address": {
+            "postal_code": true,
+            "line1": true,
+            "country": true,
+            "city": true
+            }
+            },
+            "redirect_requires_popup": false,
+            "requires_tokenized_redirect_popup": false
+            }
+            }
+        """#
+        let option = try decode(json)
+        guard case .payment(let ctx) = option.context else {
+            return XCTFail("Expected PaymentContext")
+        }
+        
+        let requiredFields = try XCTUnwrap(ctx.requiredFields)
+        let address = try XCTUnwrap(requiredFields.address)
+        
+        // Verify all address fields match the API response
+        XCTAssertEqual(address.postalCode, true)
+        XCTAssertEqual(address.line1, true)
+        XCTAssertEqual(address.country, true)
+        XCTAssertEqual(address.city, true)
+        
+        // Verify other fields are nil (not present in response)
+        XCTAssertNil(address.organization)
+        XCTAssertNil(address.houseNumberOrName)
+        XCTAssertNil(address.line2)
+        XCTAssertNil(address.state)
+        XCTAssertNil(address.stateCode)
+        
+        // Verify top-level required fields are nil (not present)
+        XCTAssertNil(requiredFields.emailAddress)
+        XCTAssertNil(requiredFields.taxId)
+        XCTAssertNil(requiredFields.firstName)
+        XCTAssertNil(requiredFields.lastName)
     }
 }

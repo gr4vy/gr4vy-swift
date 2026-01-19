@@ -9,10 +9,10 @@ import Foundation
 
 public struct Gr4vyPaymentOption: Codable {
     // MARK: - Properties
-    public let method: String
-    public let mode: String
-    public let canStorePaymentMethod: Bool
-    public let canDelayCapture: Bool
+    public let method: String?
+    public let mode: String?
+    public let canStorePaymentMethod: Bool?
+    public let canDelayCapture: Bool?
     public let type: String
     public let iconUrl: String?
     public let label: String?
@@ -33,10 +33,10 @@ public struct Gr4vyPaymentOption: Codable {
     // MARK: - Initializer
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.method = try container.decode(String.self, forKey: .method)
-        self.mode = try container.decode(String.self, forKey: .mode)
-        self.canStorePaymentMethod = try container.decode(Bool.self, forKey: .canStorePaymentMethod)
-        self.canDelayCapture = try container.decode(Bool.self, forKey: .canDelayCapture)
+        self.method = try container.decodeIfPresent(String.self, forKey: .method)
+        self.mode = try container.decodeIfPresent(String.self, forKey: .mode)
+        self.canStorePaymentMethod = try container.decodeIfPresent(Bool.self, forKey: .canStorePaymentMethod)
+        self.canDelayCapture = try container.decodeIfPresent(Bool.self, forKey: .canDelayCapture)
         self.type = try container.decodeIfPresent(String.self, forKey: .type) ?? "payment-option"
         self.iconUrl = try container.decodeIfPresent(String.self, forKey: .iconUrl)
         self.label = try container.decodeIfPresent(String.self, forKey: .label)
@@ -79,8 +79,8 @@ public enum Gr4vyPaymentOptionContext: Codable {
 
     public struct Gr4vyWalletContext: Codable {
         // MARK: - Properties
-        let merchantName: String
-        let supportedSchemes: [String]
+        let merchantName: String?
+        let supportedSchemes: [String]?
 
         // MARK: - CodingKeys
         enum CodingKeys: String, CodingKey {
@@ -91,10 +91,10 @@ public enum Gr4vyPaymentOptionContext: Codable {
 
     public struct Gr4vyGoogleContext: Codable {
         // MARK: - Properties
-        let merchantName: String
-        let supportedSchemes: [String]
-        let gateway: String
-        let gatewayMerchantId: String
+        let merchantName: String?
+        let supportedSchemes: [String]?
+        let gateway: String?
+        let gatewayMerchantId: String?
 
         // MARK: - CodingKeys
         enum CodingKeys: String, CodingKey {
@@ -107,10 +107,10 @@ public enum Gr4vyPaymentOptionContext: Codable {
 
     public struct Gr4vyPaymentContext: Codable {
         // MARK: - Properties
-        let redirectRequiresPopup: Bool
-        let requiresTokenizedRedirectPopup: Bool
+        let redirectRequiresPopup: Bool?
+        let requiresTokenizedRedirectPopup: Bool?
         let approvalUI: Gr4vyApprovalUI?
-        let requiredFields: [String: Bool]?
+        let requiredFields: Gr4vyRequiredFields?
 
         // MARK: - CodingKeys
         enum CodingKeys: String, CodingKey {
@@ -128,6 +128,153 @@ public enum Gr4vyPaymentOptionContext: Codable {
             // MARK: - CodingKeys
             enum CodingKeys: String, CodingKey {
                 case height, width
+            }
+        }
+        
+        public struct Gr4vyRequiredFields: Codable {
+            // MARK: - Properties
+            public let emailAddress: Bool?
+            public let taxId: Bool?
+            public let firstName: Bool?
+            public let lastName: Bool?
+            public let address: Gr4vyAddressRequiredFields?
+            // Store any additional dynamic fields
+            private var additionalFields: [String: Bool] = [:]
+            
+            // MARK: - CodingKeys
+            enum CodingKeys: String, CodingKey {
+                case emailAddress = "email_address"
+                case taxId = "tax_id"
+                case firstName = "first_name"
+                case lastName = "last_name"
+                case address
+            }
+            
+            // MARK: - Custom Decoding
+            public init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                
+                // Decode known boolean fields
+                emailAddress = try container.decodeIfPresent(Bool.self, forKey: .emailAddress)
+                taxId = try container.decodeIfPresent(Bool.self, forKey: .taxId)
+                firstName = try container.decodeIfPresent(Bool.self, forKey: .firstName)
+                lastName = try container.decodeIfPresent(Bool.self, forKey: .lastName)
+                
+                // Decode address object if present
+                address = try container.decodeIfPresent(Gr4vyAddressRequiredFields.self, forKey: .address)
+                
+                // Decode any additional dynamic fields (flat boolean fields that aren't known)
+                let allKeysContainer = try decoder.container(keyedBy: DynamicCodingKey.self)
+                for key in allKeysContainer.allKeys {
+                    let codingKey = CodingKeys(stringValue: key.stringValue)
+                    // Skip known fields and address (already decoded)
+                    if codingKey == nil {
+                        // Try to decode as Bool for additional fields
+                        if let boolValue = try? allKeysContainer.decode(Bool.self, forKey: key) {
+                            additionalFields[key.stringValue] = boolValue
+                        }
+                    }
+                }
+            }
+            
+            // MARK: - Custom Encoding
+            public func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: DynamicCodingKey.self)
+                
+                // Encode known fields
+                if let emailAddress = emailAddress {
+                    try container.encode(emailAddress, forKey: DynamicCodingKey(stringValue: CodingKeys.emailAddress.rawValue))
+                }
+                if let taxId = taxId {
+                    try container.encode(taxId, forKey: DynamicCodingKey(stringValue: CodingKeys.taxId.rawValue))
+                }
+                if let firstName = firstName {
+                    try container.encode(firstName, forKey: DynamicCodingKey(stringValue: CodingKeys.firstName.rawValue))
+                }
+                if let lastName = lastName {
+                    try container.encode(lastName, forKey: DynamicCodingKey(stringValue: CodingKeys.lastName.rawValue))
+                }
+                if let address = address {
+                    try container.encode(address, forKey: DynamicCodingKey(stringValue: CodingKeys.address.rawValue))
+                }
+                
+                // Encode additional dynamic fields
+                for (key, value) in additionalFields {
+                    try container.encode(value, forKey: DynamicCodingKey(stringValue: key))
+                }
+            }
+            
+            // MARK: - Accessor for dynamic fields
+            public func getField(_ key: String) -> Bool? {
+                return additionalFields[key]
+            }
+            
+            // MARK: - Subscript for dictionary-like access (backward compatibility)
+            public subscript(key: String) -> Bool? {
+                // Check known fields first
+                switch key {
+                case "email_address":
+                    return emailAddress
+                case "tax_id":
+                    return taxId
+                case "first_name":
+                    return firstName
+                case "last_name":
+                    return lastName
+                default:
+                    // Check additional dynamic fields
+                    return additionalFields[key]
+                }
+            }
+            
+            // MARK: - Computed properties for backward compatibility
+            public var isEmpty: Bool {
+                return emailAddress == nil &&
+                       taxId == nil &&
+                       firstName == nil &&
+                       lastName == nil &&
+                       address == nil &&
+                       additionalFields.isEmpty
+            }
+            
+            // MARK: - Dynamic Coding Key
+            private struct DynamicCodingKey: CodingKey {
+                var stringValue: String
+                var intValue: Int?
+                
+                init(stringValue: String) {
+                    self.stringValue = stringValue
+                }
+                
+                init?(intValue: Int) {
+                    return nil
+                }
+            }
+            
+            public struct Gr4vyAddressRequiredFields: Codable {
+                // MARK: - Properties
+                public let organization: Bool?
+                public let houseNumberOrName: Bool?
+                public let line1: Bool?
+                public let line2: Bool?
+                public let postalCode: Bool?
+                public let city: Bool?
+                public let state: Bool?
+                public let stateCode: Bool?
+                public let country: Bool?
+                
+                // MARK: - CodingKeys
+                enum CodingKeys: String, CodingKey {
+                    case organization
+                    case houseNumberOrName = "house_number_or_name"
+                    case line1
+                    case line2
+                    case postalCode = "postal_code"
+                    case city
+                    case state
+                    case stateCode = "state_code"
+                    case country
+                }
             }
         }
     }

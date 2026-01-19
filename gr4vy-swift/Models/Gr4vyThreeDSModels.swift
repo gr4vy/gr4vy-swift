@@ -12,10 +12,10 @@ struct DefaultSdkType: Codable {
     // MARK: - Properties
     
     /// Indicates if the SDK is wrapped or native
-    let wrappedInd: String
+    let wrappedInd: String?
     
     /// SDK variant identifier
-    let sdkVariant: String
+    let sdkVariant: String?
     
     // MARK: - CodingKeys
     
@@ -30,10 +30,10 @@ struct DeviceRenderOptions: Codable {
     // MARK: - Properties
     
     /// SDK interface type (e.g., "01" for native, "02" for HTML)
-    let sdkInterface: String
+    let sdkInterface: String?
     
     /// Array of supported UI types for the challenge flow
-    let sdkUiType: [String]
+    let sdkUiType: [String]?
     
     // MARK: - CodingKeys
     
@@ -48,14 +48,14 @@ struct SdkEphemeralPubKey: Codable {
     // MARK: - Properties
     
     /// Y coordinate of the elliptic curve public key
-    let y: String
+    let y: String?
     
     /// X coordinate of the elliptic curve public key
-    let x: String
+    let x: String?
     
     /// Key type identifier (typically "EC" for elliptic curve)
-    let kty: String
+    let kty: String?
     
     /// Curve type identifier (typically "P-256")
-    let crv: String
+    let crv: String?
 }

@@ -9,10 +9,10 @@ import Foundation
 
 public struct Gr4vyCardDetailsResponse: Codable {
     // MARK: - Properties
-    public let type: String
+    public let type: String?
     public let id: String
-    public let cardType: String
-    public let scheme: String
+    public let cardType: String?
+    public let scheme: String?
     public let schemeIconURL: URL?
     public let country: String?
     public let requiredFields: RequiredFields?

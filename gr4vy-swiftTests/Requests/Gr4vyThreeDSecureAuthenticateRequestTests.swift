@@ -517,7 +517,7 @@ final class Gr4vyThreeDSecureAuthenticateRequestTests: XCTestCase {
 
         // Then
         XCTAssertEqual(request.deviceRenderOptions.sdkUiType, uiTypes)
-        XCTAssertEqual(request.deviceRenderOptions.sdkUiType.count, 5)
+        XCTAssertEqual(request.deviceRenderOptions.sdkUiType?.count, 5)
     }
 
     func testEmptySdkUiTypes() {
@@ -529,7 +529,11 @@ final class Gr4vyThreeDSecureAuthenticateRequestTests: XCTestCase {
 
         // Then
         XCTAssertEqual(request.deviceRenderOptions.sdkUiType, [])
-        XCTAssertTrue(request.deviceRenderOptions.sdkUiType.isEmpty)
+        if let sdkUiType = request.deviceRenderOptions.sdkUiType {
+            XCTAssertTrue(sdkUiType.isEmpty)
+        } else {
+            XCTFail("sdkUiType should not be nil")
+        }
     }
 
     func testJSONEncodingWithEmptyStringValues() throws {

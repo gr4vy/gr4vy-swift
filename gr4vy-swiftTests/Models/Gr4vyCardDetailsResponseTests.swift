@@ -175,7 +175,7 @@ final class Gr4vyCardDetailsResponseTests: XCTestCase {
         {
             "type": "card_details",
             "id": "cd_null_test",
-            "card_type": "credit",
+            "card_type": null,
             "scheme": "visa",
             "scheme_icon_url": null,
             "country": null,
@@ -187,7 +187,7 @@ final class Gr4vyCardDetailsResponseTests: XCTestCase {
 
         XCTAssertEqual(response.type, "card_details")
         XCTAssertEqual(response.id, "cd_null_test")
-        XCTAssertEqual(response.cardType, "credit")
+        XCTAssertNil(response.cardType)
         XCTAssertEqual(response.scheme, "visa")
         XCTAssertNil(response.schemeIconURL)
         XCTAssertNil(response.country)
@@ -196,36 +196,12 @@ final class Gr4vyCardDetailsResponseTests: XCTestCase {
 
     func testDecodingFailsWithMissingRequiredFields() {
         let invalidJsons = [
-            // Missing type
-            """
-            {
-                "id": "cd_123",
-                "card_type": "credit",
-                "scheme": "visa"
-            }
-            """,
-            // Missing id
+            // Missing id (only id is required)
             """
             {
                 "type": "card_details",
                 "card_type": "credit",
                 "scheme": "visa"
-            }
-            """,
-            // Missing card_type
-            """
-            {
-                "type": "card_details",
-                "id": "cd_123",
-                "scheme": "visa"
-            }
-            """,
-            // Missing scheme
-            """
-            {
-                "type": "card_details",
-                "id": "cd_123",
-                "card_type": "credit"
             }
             """,
         ]
@@ -233,6 +209,90 @@ final class Gr4vyCardDetailsResponseTests: XCTestCase {
         for invalidJson in invalidJsons {
             XCTAssertThrowsError(try decode(invalidJson), "Should throw error for missing required field")
         }
+    }
+    
+    func testDecodingWithMissingTypeAndScheme() throws {
+        // type and scheme are optional, so missing them should succeed
+        let json = """
+        {
+            "id": "cd_123"
+        }
+        """
+        
+        let response = try decode(json)
+        XCTAssertNil(response.type)
+        XCTAssertEqual(response.id, "cd_123")
+        XCTAssertNil(response.scheme)
+    }
+    
+    func testDecodingWithMissingCardType() throws {
+        // card_type is optional, so missing card_type should succeed
+        let json = """
+        {
+            "type": "card_details",
+            "id": "cd_123",
+            "scheme": "visa"
+        }
+        """
+        
+        let response = try decode(json)
+        XCTAssertEqual(response.type, "card_details")
+        XCTAssertEqual(response.id, "cd_123")
+        XCTAssertNil(response.cardType)
+        XCTAssertEqual(response.scheme, "visa")
+    }
+    
+    func testDecodingWithActualAPIResponse() throws {
+        // Test with actual API response format (card-detail singular, no card_type field)
+        let json = """
+        {
+            "required_fields": {
+                "tax_id": false,
+                "email_address": false,
+                "last_name": false,
+                "phone_number": false,
+                "first_name": false,
+                "address": {
+                    "house_number_or_name": false,
+                    "state": false,
+                    "country": false,
+                    "line1": false,
+                    "city": false,
+                    "postal_code": false
+                }
+            },
+            "id": "524000",
+            "type": "card-detail",
+            "scheme": "mastercard",
+            "scheme_icon_url": "https://api.sandbox.agentic.gr4vy.app/assets/icons/card-schemes/mastercard.svg"
+        }
+        """
+        
+        let response = try decode(json)
+        XCTAssertEqual(response.type, "card-detail")
+        XCTAssertEqual(response.id, "524000")
+        XCTAssertNil(response.cardType) // card_type is missing, should be nil
+        XCTAssertEqual(response.scheme, "mastercard")
+        XCTAssertNotNil(response.schemeIconURL)
+        XCTAssertNotNil(response.requiredFields)
+    }
+    
+    func testDecodingWithNullCardType() throws {
+        // card_type can be null, should decode as nil
+        let json = """
+        {
+            "id": "524000",
+            "type": "card-detail",
+            "card_type": null,
+            "scheme": "mastercard"
+        }
+        """
+        
+        let response = try decode(json)
+        XCTAssertEqual(response.id, "524000")
+        XCTAssertEqual(response.type, "card-detail")
+        XCTAssertNil(response.cardType) // null should decode as nil
+        XCTAssertEqual(response.scheme, "mastercard")
     }
 
     func testDecodingFailsWithInvalidDataTypes() {

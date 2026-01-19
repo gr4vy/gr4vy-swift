@@ -67,7 +67,7 @@ Add the following to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.0.0")
+    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.0.1")
 ]
 ```
 
@@ -76,7 +76,7 @@ dependencies: [
 Add the following to your `Podfile`:
 
 ```ruby
-pod 'gr4vy-swift', '~> 1.0.0'
+pod 'gr4vy-swift', '~> 1.0.1'
 ```
 
 Then run:
@@ -379,6 +379,8 @@ gr4vy.paymentOptions.list(request: request) { result in
 
 Get details about a particular card based on its BIN, the checkout country/currency, and more.
 
+**Note**: Some fields in the response (such as `scheme`, `cardType`, `type`) are optional and may be `nil` if not provided by the API. Always use optional binding or nil coalescing when accessing these fields.
+
 ```swift
 // Create card details object
 let cardDetails = Gr4vyCardDetails(
@@ -398,8 +400,17 @@ let request = Gr4vyCardDetailsRequest(
 // Async/await
 do {
     let cardDetailsResponse = try await gr4vy.cardDetails.get(request: request)
-    print("Card brand: \(cardDetailsResponse.scheme)")
-    print("Card type: \(cardDetailsResponse.cardType)")
+    print("Card brand: \(cardDetailsResponse.scheme ?? "unknown")")
+    print("Card type: \(cardDetailsResponse.cardType ?? "unknown")")
+    print("Card ID: \(cardDetailsResponse.id)")
+    
+    // Access optional required fields
+    if let requiredFields = cardDetailsResponse.requiredFields {
+        print("Required fields available")
+        if let address = requiredFields.address {
+            print("Address fields: city=\(address.city ?? false), postalCode=\(address.postalCode ?? false)")
+        }
+    }
 } catch {
     print("Error fetching card details: \(error)")
 }
@@ -408,8 +419,9 @@ do {
 gr4vy.cardDetails.get(request: request) { result in
     switch result {
     case .success(let cardDetailsResponse):
-        print("Card brand: \(cardDetailsResponse.scheme)")
-        print("Card type: \(cardDetailsResponse.cardType)")
+        print("Card brand: \(cardDetailsResponse.scheme ?? "unknown")")
+        print("Card type: \(cardDetailsResponse.cardType ?? "unknown")")
+        print("Card ID: \(cardDetailsResponse.id)")
     case .failure(let error):
         print("Error fetching card details: \(error)")
     }
@@ -419,6 +431,8 @@ gr4vy.cardDetails.get(request: request) { result in
 ### List buyer's payment methods
 
 List all the stored payment methods for a buyer, filtered by the checkout's currency and country.
+
+**Note**: Fields such as `type` and `id` in payment method items are optional and may be `nil`. Always use optional binding when accessing these fields.
 
 ```swift
 // Create payment methods criteria

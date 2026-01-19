@@ -258,35 +258,32 @@ final class Gr4vyBuyersPaymentMethodsResponseTests: XCTestCase {
 
     func testDecodingFailsWithMissingRequiredFields() {
         let invalidJsons = [
-            // Missing items
+            // Missing items (only items is required)
             """
             {}
-            """,
-            // Missing id in payment method
-            """
-            {
-                "items": [
-                    {
-                        "type": "payment-method"
-                    }
-                ]
-            }
-            """,
-            // Missing type in payment method
-            """
-            {
-                "items": [
-                    {
-                        "id": "pm_123"
-                    }
-                ]
-            }
             """,
         ]
 
         for invalidJson in invalidJsons {
             XCTAssertThrowsError(try decode(invalidJson), "Should throw error for missing required field")
         }
+    }
+    
+    func testDecodingWithMissingTypeAndId() throws {
+        // type and id are optional, so missing them should succeed
+        let json = """
+        {
+            "items": [
+                {}
+            ]
+        }
+        """
+        
+        let response = try decode(json)
+        XCTAssertEqual(response.items.count, 1)
+        let paymentMethod = response.items[0]
+        XCTAssertNil(paymentMethod.type)
+        XCTAssertNil(paymentMethod.id)
     }
 
     func testDecodingFailsWithInvalidDataTypes() {
@@ -891,7 +888,7 @@ final class Gr4vyBuyersPaymentMethodsResponseTests: XCTestCase {
             "{\"items\": null}",
             "{\"items\": \"not_an_array\"}",
             "{\"items\": [\"not_an_object\"]}",
-            "{\"items\": [{\"type\": null}]}",
+            // Note: {"items": [{"type": null}]} is now valid since type is optional
             "{\"items\": [{\"id\": 123}]}",
             "{\"items\": [{\"type\": \"payment-method\", \"id\": \"pm_123\", \"details\": \"not_an_object\"}]}",
         ]

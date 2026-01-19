@@ -206,8 +206,8 @@ extension Gr4vyCheckoutSessionService {
         if debugMode {
             Gr4vyLogger.debug("3DS transaction response - Indicator: \(authenticateResponse.indicator)")
             if authenticateResponse.isChallenge, let challenge = authenticateResponse.challenge {
-                Gr4vyLogger.debug("Challenge required - Server Transaction ID: \(challenge.serverTransactionId)")
-                Gr4vyLogger.debug("ACS Transaction ID: \(challenge.acsTransactionId)")
+                Gr4vyLogger.debug("Challenge required - Server Transaction ID: \(challenge.serverTransactionId ?? "nil")")
+                Gr4vyLogger.debug("ACS Transaction ID: \(challenge.acsTransactionId ?? "nil")")
             } else if authenticateResponse.isFrictionless {
                 Gr4vyLogger.debug("3DS authentication completed - FINISH indicator")
             } else if authenticateResponse.isError {

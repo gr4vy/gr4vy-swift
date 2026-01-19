@@ -126,9 +126,10 @@ final class Gr4vyThreeDSecureResponseTests: XCTestCase {
         XCTAssertEqual(challenge.serverTransactionId, "dbc51a89-48d9-2324-82cf-89263d2710a1")
         XCTAssertEqual(challenge.acsTransactionId, "99caa473-57db-1212-9ecc-02078ee5007c")
         XCTAssertEqual(challenge.acsReferenceNumber, "XXX")
-        XCTAssertEqual(challenge.acsRenderingType.acsInterface, "01")
-        XCTAssertEqual(challenge.acsRenderingType.acsUiTemplate, "04")
-        XCTAssertNil(challenge.acsRenderingType.deviceUserInterfaceMode)
+        let acsRenderingType = try XCTUnwrap(challenge.acsRenderingType)
+        XCTAssertEqual(acsRenderingType.acsInterface, "01")
+        XCTAssertEqual(acsRenderingType.acsUiTemplate, "04")
+        XCTAssertNil(acsRenderingType.deviceUserInterfaceMode)
         XCTAssertEqual(challenge.acsSignedContent, "XXX.XXXXXX")
     }
 

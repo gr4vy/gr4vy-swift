@@ -849,9 +849,10 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         XCTAssertEqual(challengeResponse.acsTransactionId, "acs_txn_456")
         XCTAssertEqual(challengeResponse.acsReferenceNumber, "acs_ref_789")
         XCTAssertEqual(challengeResponse.acsSignedContent, "signed_content_abc")
-        XCTAssertEqual(challengeResponse.acsRenderingType.acsInterface, "01")
-        XCTAssertEqual(challengeResponse.acsRenderingType.acsUiTemplate, "01")
-        XCTAssertEqual(challengeResponse.acsRenderingType.deviceUserInterfaceMode, "01")
+        let acsRenderingType = try XCTUnwrap(challengeResponse.acsRenderingType)
+        XCTAssertEqual(acsRenderingType.acsInterface, "01")
+        XCTAssertEqual(acsRenderingType.acsUiTemplate, "01")
+        XCTAssertEqual(acsRenderingType.deviceUserInterfaceMode, "01")
     }
     
     // MARK: - 3DS Response Indicator Tests
@@ -1065,12 +1066,17 @@ final class Gr4vy3DSServiceTests: XCTestCase {
             expirationDate: "12/25",
             securityCode: "123"
         )))
-        let viewController = UIViewController()
+        let viewController = await MainActor.run { UIViewController() }
         
         mockHTTPClient.data = Data()
+        mockHTTPClient.error = nil
         
         // When - Perform multiple operations
         for i in 1...3 {
+            // Reset mock state for each iteration
+            mockHTTPClient.data = Data()
+            mockHTTPClient.error = nil
+            
             let result = try await threeDSService.tokenize(
                 checkoutSessionId: "checkout_session_\(i)",
                 cardData: cardData,

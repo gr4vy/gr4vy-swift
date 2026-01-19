@@ -14,7 +14,7 @@ public struct Gr4vyBuyersPaymentMethodsResponse: Codable {
 
 public struct Gr4vyBuyersPaymentMethod: Codable {
     // MARK: - Properties
-    public let type: String
+    public let type: String?
     public let approvalURL: URL?
     public let country: String?
     public let currency: String?
@@ -26,7 +26,7 @@ public struct Gr4vyBuyersPaymentMethod: Codable {
     public let method: String?
     public let mode: String?
     public let scheme: String?
-    public let id: String
+    public let id: String?
     public let merchantAccountId: String?
     public let additionalSchemes: [String]?
     public let citLastUsedAt: String?
