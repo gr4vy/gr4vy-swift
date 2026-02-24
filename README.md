@@ -254,7 +254,7 @@ gr4vy.tokenize(
 You can also tokenize an already-stored payment method by passing an `id` payment method to the same `tokenize` call. Include a `securityCode` only when required by the merchant or card scheme.
 
 ```swift
-// Use a stored payment method ID (optionally include CVV)
+// Use a stored payment method ID (optionally include security code)
 let storedCardData = Gr4vyCardData(
     paymentMethod: .id(IdPaymentMethod(
         id: "b7e3a2c2-1f4b-4e8a-9c2d-2e7e2b8e9c2d", // stored payment method id (UUID)
