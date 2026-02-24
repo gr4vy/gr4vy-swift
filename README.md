@@ -249,6 +249,45 @@ gr4vy.tokenize(
 }
 ```
 
+#### Using stored payment methods
+
+You can also tokenize an already-stored payment method by passing an `id` payment method to the same `tokenize` call. Include a `securityCode` only when required by the merchant or card scheme.
+
+```swift
+// Use a stored payment method ID (optionally include CVV)
+let storedCardData = Gr4vyCardData(
+    paymentMethod: .id(IdPaymentMethod(
+        id: "b7e3a2c2-1f4b-4e8a-9c2d-2e7e2b8e9c2d", // stored payment method id (UUID)
+        securityCode: "123" // optional
+    ))
+)
+
+// Tokenize stored payment method (async/await)
+do {
+    try await gr4vy.tokenize(
+        checkoutSessionId: "session_123",
+        cardData: storedCardData
+    )
+    print("Stored payment method tokenization complete")
+} catch {
+    print("Error tokenizing stored payment method: \(error)")
+}
+
+// Completion handler variant
+gr4vy.tokenize(
+    checkoutSessionId: "session_123",
+    cardData: storedCardData
+) { result in
+    switch result {
+    case .success:
+        print("Stored payment method tokenization complete")
+    case .failure(let error):
+        print("Error tokenizing stored payment method: \(error)")
+    }
+}
+```
+
+
 ### Vault card details with 3D Secure authentication
 
 Stores card details with optional 3D Secure authentication. When authentication is enabled, the SDK will automatically handle 3DS Secure flows.
