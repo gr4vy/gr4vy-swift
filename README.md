@@ -287,7 +287,6 @@ gr4vy.tokenize(
 }
 ```
 
-
 ### Vault card details with 3D Secure authentication
 
 Stores card details with optional 3D Secure authentication. When authentication is enabled, the SDK will automatically handle 3DS Secure flows.
