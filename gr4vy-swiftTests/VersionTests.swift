@@ -300,11 +300,14 @@ final class VersionTests: XCTestCase {
     func testVersionCurrentCanBeUsedInUserAgent() {
         // Given & When
         let version = Version.current
-        let userAgent = "Gr4vy-iOS-SDK/\(version)"
+        let userAgent = "\(Gr4vySDK.name)/\(version)"
 
         // Then
         XCTAssertTrue(userAgent.contains(version), "Version should be usable in user agent string")
-        XCTAssertTrue(userAgent.hasPrefix("Gr4vy-iOS-SDK/"), "User agent should be formatted correctly")
+        XCTAssertTrue(
+            userAgent.hasPrefix("\(Gr4vySDK.name)/"),
+            "User agent should be formatted correctly"
+        )
     }
 
     func testVersionCurrentCanBeUsedInAPIHeaders() {

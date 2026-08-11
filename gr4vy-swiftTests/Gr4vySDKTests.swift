@@ -37,13 +37,16 @@ final class Gr4vySDKTests: XCTestCase {
 
     func testSDKName() {
         // Test that name is properly set
-        XCTAssertEqual(Gr4vySDK.name, "Gr4vy-iOS-SDK")
+        XCTAssertEqual(Gr4vySDK.name, "Gr4vy-Swift")
         XCTAssertFalse(Gr4vySDK.name.isEmpty)
 
         // Test name format and content
         XCTAssertTrue(Gr4vySDK.name.contains("Gr4vy"), "SDK name should contain 'Gr4vy'")
-        XCTAssertTrue(Gr4vySDK.name.contains("iOS"), "SDK name should contain 'iOS'")
-        XCTAssertTrue(Gr4vySDK.name.contains("SDK"), "SDK name should contain 'SDK'")
+        XCTAssertTrue(Gr4vySDK.name.contains("Swift"), "SDK name should name the language, not the OS")
+        XCTAssertFalse(
+            Gr4vySDK.name.contains(" "),
+            "SDK name must be a single User-Agent product token"
+        )
     }
 
     func testUserAgent() {
@@ -51,20 +54,32 @@ final class Gr4vySDKTests: XCTestCase {
         let userAgent = Gr4vySDK.userAgent
         XCTAssertFalse(userAgent.isEmpty)
 
-        // Test that user agent contains expected components
-        XCTAssertTrue(userAgent.contains("Gr4vy-iOS-SDK"), "User agent should contain SDK name")
-        XCTAssertTrue(userAgent.contains("1.0.1"), "User agent should contain version")
+        // Test that user agent contains expected components. Derived from the
+        // constants rather than hardcoded so a version bump can't leave this stale.
+        XCTAssertTrue(userAgent.contains(Gr4vySDK.name), "User agent should contain SDK name")
+        XCTAssertTrue(userAgent.contains(Gr4vySDK.version), "User agent should contain version")
         XCTAssertTrue(userAgent.contains("iOS"), "User agent should contain platform")
+        XCTAssertTrue(
+            userAgent.hasPrefix("\(Gr4vySDK.name)/\(Gr4vySDK.version)"),
+            "User agent should start with SDK name and version"
+        )
 
-        // Test user agent format
-        XCTAssertTrue(userAgent.hasPrefix("Gr4vy-iOS-SDK/"), "User agent should start with SDK name and version")
-        XCTAssertTrue(userAgent.contains("(iOS "), "User agent should contain iOS version in parentheses")
-        XCTAssertTrue(userAgent.hasSuffix(")"), "User agent should end with closing parenthesis")
-
-        // Test that version numbers are present
-        let versionRegex = try! NSRegularExpression(pattern: "\\d+\\.\\d+\\.\\d+", options: [])
-        let matches = versionRegex.matches(in: userAgent, options: [], range: NSRange(location: 0, length: userAgent.count))
-        XCTAssertGreaterThanOrEqual(matches.count, 1, "User agent should contain at least one version number")
+        // Assert the overall shape independently of the constants' values, so a
+        // change to how userAgent is composed still fails even though the
+        // component checks above derive from those constants.
+        let formatRegex = try! NSRegularExpression(
+            pattern: "^[^/ ]+/[^ ]+ \\(iOS \\d+\\.\\d+\\.\\d+\\)$",
+            options: []
+        )
+        let matches = formatRegex.matches(
+            in: userAgent,
+            options: [],
+            range: NSRange(userAgent.startIndex..., in: userAgent)
+        )
+        XCTAssertEqual(
+            matches.count, 1,
+            "User agent should be '<name>/<version> (iOS <x.y.z>)', got '\(userAgent)'"
+        )
     }
 
     func testMinimumIOSVersion() {
@@ -243,7 +258,7 @@ final class Gr4vySDKTests: XCTestCase {
 
                 // Verify values are consistent
                 XCTAssertEqual(version, Gr4vySDK.version)
-                XCTAssertEqual(name, "Gr4vy-iOS-SDK")
+                XCTAssertEqual(name, "Gr4vy-Swift")
                 XCTAssertEqual(minVersion, "16.0")
                 XCTAssertTrue(isSupported is Bool)
 

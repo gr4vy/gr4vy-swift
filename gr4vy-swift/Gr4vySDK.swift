@@ -10,7 +10,9 @@ import Foundation
 public struct Gr4vySDK {
     // MARK: - Properties
     public static let version = Version.current
-    public static let name = "Gr4vy-iOS-SDK"
+    // Names this SDK on the wire. Kept distinct from the gr4vy-ios Embed wrapper,
+    // which is a separate SDK on its own version line.
+    public static let name = "Gr4vy-Swift"
     public static let minimumIOSVersion = "16.0"
 
     // MARK: - Public Methods
