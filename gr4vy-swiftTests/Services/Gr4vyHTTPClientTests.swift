@@ -74,10 +74,11 @@ class Gr4vyHTTPClientTests: XCTestCase {
         XCTAssertEqual(mockSession.lastRequest?.value(forHTTPHeaderField: "x-gr4vy-merchant-account-id"), "test-merchant")
 
         // Verify user agent header
-        let userAgent = mockSession.lastRequest?.value(forHTTPHeaderField: "User-Agent")
-        XCTAssertNotNil(userAgent)
-        XCTAssertTrue(userAgent!.contains("\(Gr4vySDK.name)/\(Gr4vySDK.version)"))
-        XCTAssertTrue(userAgent!.contains("iOS"))
+        let userAgent = try XCTUnwrap(
+            mockSession.lastRequest?.value(forHTTPHeaderField: "User-Agent")
+        )
+        XCTAssertTrue(userAgent.contains("\(Gr4vySDK.name)/\(Gr4vySDK.version)"))
+        XCTAssertTrue(userAgent.contains("iOS"))
 
         // Verify body
         XCTAssertNotNil(mockSession.lastRequest?.httpBody)
