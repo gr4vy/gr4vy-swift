@@ -14,7 +14,7 @@ let package = Package(
             targets: ["gr4vy-swift"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/ios-3ds-sdk/SPM.git", exact: "2.5.32"),
+        .package(url: "https://github.com/ios-3ds-sdk/SPM.git", exact: "2.6.00"),
     ],
     targets: [
         .target(
