@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ios-3ds-sdk/SPM.git",
       "state" : {
-        "revision" : "421449969baa6ef80c33fd077c217f724ccfd348",
-        "version" : "2.5.30"
+        "revision" : "b65ec9c14585d94a0b8b5753916a312f1e078e3e",
+        "version" : "2.5.32"
       }
     }
   ],
