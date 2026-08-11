@@ -25,7 +25,6 @@ echo $NEW_VERSION > VERSION
 sed -i '' "s/static let current = \".*\"/static let current = \"$NEW_VERSION\"/" gr4vy-swift/Version.swift
 
 # Update test files that might reference the version
-sed -i '' "s/XCTAssertTrue(userAgent!.contains(\"Gr4vy-iOS-SDK\/.*\"))/XCTAssertTrue(userAgent!.contains(\"Gr4vy-iOS-SDK\/$NEW_VERSION\"))/" gr4vy-swiftTests/Gr4vySDKTests.swift
 sed -i '' "s/XCTAssertTrue(userAgent.contains(\".*\"), \"User agent should contain version\")/XCTAssertTrue(userAgent.contains(\"$NEW_VERSION\"), \"User agent should contain version\")/" gr4vy-swiftTests/Gr4vySDKTests.swift
 
 # Update testSDKVersion hardcoded version if present

@@ -37,13 +37,16 @@ final class Gr4vySDKTests: XCTestCase {
 
     func testSDKName() {
         // Test that name is properly set
-        XCTAssertEqual(Gr4vySDK.name, "Gr4vy-iOS-SDK")
+        XCTAssertEqual(Gr4vySDK.name, "Gr4vy-Swift")
         XCTAssertFalse(Gr4vySDK.name.isEmpty)
 
         // Test name format and content
         XCTAssertTrue(Gr4vySDK.name.contains("Gr4vy"), "SDK name should contain 'Gr4vy'")
-        XCTAssertTrue(Gr4vySDK.name.contains("iOS"), "SDK name should contain 'iOS'")
-        XCTAssertTrue(Gr4vySDK.name.contains("SDK"), "SDK name should contain 'SDK'")
+        XCTAssertTrue(Gr4vySDK.name.contains("Swift"), "SDK name should name the language, not the OS")
+        XCTAssertFalse(
+            Gr4vySDK.name.contains(" "),
+            "SDK name must be a single User-Agent product token"
+        )
     }
 
     func testUserAgent() {
@@ -52,12 +55,12 @@ final class Gr4vySDKTests: XCTestCase {
         XCTAssertFalse(userAgent.isEmpty)
 
         // Test that user agent contains expected components
-        XCTAssertTrue(userAgent.contains("Gr4vy-iOS-SDK"), "User agent should contain SDK name")
+        XCTAssertTrue(userAgent.contains("Gr4vy-Swift"), "User agent should contain SDK name")
         XCTAssertTrue(userAgent.contains("1.0.1"), "User agent should contain version")
         XCTAssertTrue(userAgent.contains("iOS"), "User agent should contain platform")
 
         // Test user agent format
-        XCTAssertTrue(userAgent.hasPrefix("Gr4vy-iOS-SDK/"), "User agent should start with SDK name and version")
+        XCTAssertTrue(userAgent.hasPrefix("Gr4vy-Swift/"), "User agent should start with SDK name and version")
         XCTAssertTrue(userAgent.contains("(iOS "), "User agent should contain iOS version in parentheses")
         XCTAssertTrue(userAgent.hasSuffix(")"), "User agent should end with closing parenthesis")
 
@@ -243,7 +246,7 @@ final class Gr4vySDKTests: XCTestCase {
 
                 // Verify values are consistent
                 XCTAssertEqual(version, Gr4vySDK.version)
-                XCTAssertEqual(name, "Gr4vy-iOS-SDK")
+                XCTAssertEqual(name, "Gr4vy-Swift")
                 XCTAssertEqual(minVersion, "16.0")
                 XCTAssertTrue(isSupported is Bool)
 
