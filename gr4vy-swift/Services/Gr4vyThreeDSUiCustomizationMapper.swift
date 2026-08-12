@@ -10,14 +10,17 @@ import ThreeDS_SDK
 import UIKit
 
 enum Gr4vyThreeDSUiCustomizationMapper {
-    static func map(_ map: Gr4vyThreeDSUiCustomizationMap?) -> [String: UiCustomization]? {
+    // 2.7.0.0 keys the customization map by UICustomizationType rather than by
+    // raw string. The enum's raw values are the same strings, so the wire
+    // behaviour is unchanged.
+    static func map(_ map: Gr4vyThreeDSUiCustomizationMap?) -> [UiCustomization.UICustomizationType: UiCustomization]? {
         guard let map = map else { return nil }
-        var result: [String: UiCustomization] = [:]
+        var result: [UiCustomization.UICustomizationType: UiCustomization] = [:]
         if let light = map.default, let ui = build(from: light) {
-            result["DEFAULT"] = ui
+            result[.DEFAULT] = ui
         }
         if let dark = map.dark, let ui = build(from: dark) {
-            result["DARK"] = ui
+            result[.DARK] = ui
         }
         return result.isEmpty ? nil : result
     }

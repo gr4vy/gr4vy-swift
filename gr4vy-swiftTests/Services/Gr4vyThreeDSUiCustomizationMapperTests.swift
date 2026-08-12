@@ -57,8 +57,8 @@ final class Gr4vyThreeDSUiCustomizationMapperTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertNotNil(result?["DEFAULT"])
-        XCTAssertNil(result?["DARK"])
+        XCTAssertNotNil(result?[.DEFAULT])
+        XCTAssertNil(result?[.DARK])
         XCTAssertEqual(result?.count, 1)
     }
 
@@ -77,8 +77,8 @@ final class Gr4vyThreeDSUiCustomizationMapperTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertNil(result?["DEFAULT"])
-        XCTAssertNotNil(result?["DARK"])
+        XCTAssertNil(result?[.DEFAULT])
+        XCTAssertNotNil(result?[.DARK])
         XCTAssertEqual(result?.count, 1)
     }
 
@@ -106,8 +106,8 @@ final class Gr4vyThreeDSUiCustomizationMapperTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertNotNil(result?["DEFAULT"])
-        XCTAssertNotNil(result?["DARK"])
+        XCTAssertNotNil(result?[.DEFAULT])
+        XCTAssertNotNil(result?[.DARK])
         XCTAssertEqual(result?.count, 2)
     }
 
@@ -151,10 +151,10 @@ final class Gr4vyThreeDSUiCustomizationMapperTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertNotNil(result?["DEFAULT"])
+        XCTAssertNotNil(result?[.DEFAULT])
         
         // Verify the UiCustomization object was created
-        let uiCustomization = result?["DEFAULT"]
+        let uiCustomization = result?[.DEFAULT]
         XCTAssertNotNil(uiCustomization)
     }
 
@@ -177,7 +177,7 @@ final class Gr4vyThreeDSUiCustomizationMapperTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertNotNil(result?["DEFAULT"])
+        XCTAssertNotNil(result?[.DEFAULT])
     }
 
     func testMapWithNativeFontCustomization() {
@@ -201,7 +201,7 @@ final class Gr4vyThreeDSUiCustomizationMapperTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertNotNil(result?["DEFAULT"])
+        XCTAssertNotNil(result?[.DEFAULT])
     }
 
     func testMapWithTextBoxBorderCustomization() {
@@ -222,7 +222,7 @@ final class Gr4vyThreeDSUiCustomizationMapperTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertNotNil(result?["DEFAULT"])
+        XCTAssertNotNil(result?[.DEFAULT])
     }
 
     func testMapWithViewBackgroundColors() {
@@ -240,7 +240,7 @@ final class Gr4vyThreeDSUiCustomizationMapperTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertNotNil(result?["DEFAULT"])
+        XCTAssertNotNil(result?[.DEFAULT])
     }
 
     func testMapWithLabelHeadingCustomization() {
@@ -260,7 +260,7 @@ final class Gr4vyThreeDSUiCustomizationMapperTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertNotNil(result?["DEFAULT"])
+        XCTAssertNotNil(result?[.DEFAULT])
     }
 
     func testMapWithToolbarText() {
@@ -278,7 +278,7 @@ final class Gr4vyThreeDSUiCustomizationMapperTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertNotNil(result?["DEFAULT"])
+        XCTAssertNotNil(result?[.DEFAULT])
     }
 
     // MARK: - Edge Cases
@@ -334,11 +334,13 @@ final class Gr4vyThreeDSUiCustomizationMapperTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(result)
-        // Keys should be "DEFAULT" and "DARK" (uppercase)
-        XCTAssertTrue(result?.keys.contains("DEFAULT") ?? false)
-        XCTAssertTrue(result?.keys.contains("DARK") ?? false)
-        XCTAssertFalse(result?.keys.contains("default") ?? true)
-        XCTAssertFalse(result?.keys.contains("dark") ?? true)
+        // Keys are UICustomizationType cases as of 3DS SDK 2.7.0.0. Assert the
+        // raw values too, since those are what reach the SDK on the wire and the
+        // uppercase spelling is what this test originally pinned.
+        XCTAssertTrue(result?.keys.contains(.DEFAULT) ?? false)
+        XCTAssertTrue(result?.keys.contains(.DARK) ?? false)
+        XCTAssertEqual(UiCustomization.UICustomizationType.DEFAULT.rawValue, "DEFAULT")
+        XCTAssertEqual(UiCustomization.UICustomizationType.DARK.rawValue, "DARK")
     }
 
     func testMapWithVariousHexColorFormats() {
