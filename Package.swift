@@ -20,7 +20,7 @@ let package = Package(
         .target(
             name: "gr4vy-swift",
             dependencies: [
-                .product(name: "ThreeDS_SDK", package: "SPM"),
+                .product(name: "ThreeDS_SDK", package: "ios-3ds-sdk-spm"),
             ],
             path: "gr4vy-swift",
             resources: [
