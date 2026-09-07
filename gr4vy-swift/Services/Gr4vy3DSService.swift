@@ -25,7 +25,12 @@ final class Gr4vy3DSService {
     private var server: Gr4vyServer
     private var transaction: Transaction?
     private var threeDS2Service: ThreeDS2Service?
-    
+
+    // Tracks the detached cleanup fired by `cleanupTransaction()` so a subsequent
+    // authentication can await it before standing up a new SDK instance, even
+    // though `threeDS2Service` itself has already been cleared by then.
+    private var pendingCleanup: Task<Void, Never>?
+
     // Global static transaction to prevent deallocation during challenge
     private static var globalTransaction: Transaction?
     private var progressView: ProgressDialog?
@@ -99,10 +104,12 @@ final class Gr4vy3DSService {
         // not permit `await` there. Detaching is safe because cleanup is already
         // best-effort — errors were swallowed before too — and the task holds the
         // service alive until it finishes, even though the property is cleared
-        // immediately below. A fresh ThreeDS2ServiceSDK is created per flow, so a
-        // still-running cleanup cannot interfere with a subsequent transaction.
+        // immediately below. The task is stashed in `pendingCleanup` so the next
+        // `performThreeDSAuthentication` call can await it before creating a new
+        // service, preserving the serialization this used to get for free when
+        // cleanup() was synchronous.
         if let service = self.threeDS2Service {
-            Task {
+            pendingCleanup = Task {
                 do {
                     try await service.cleanup()
                 } catch {
@@ -229,7 +236,7 @@ final class Gr4vy3DSService {
         viewController: UIViewController
     ) async throws -> Gr4vyTokenizeResult {
         Gr4vyLogger.debug("Initializing 3DS SDK")
-        
+
         // Clean up any existing SDK instance. Awaited rather than detached: this
         // must finish before a new ThreeDS2ServiceSDK is created below.
         if let existingService = self.threeDS2Service {
@@ -239,6 +246,14 @@ final class Gr4vy3DSService {
                 Gr4vyLogger.error("Cleanup error: \(error.localizedDescription)")
             }
         }
+
+        // `cleanupTransaction()` (called at the end of every previous flow) has
+        // already nilled `threeDS2Service` by this point, so the guard above
+        // never actually finds a service to await — the real prior cleanup, if
+        // any, is still running detached. Wait for it here so this new
+        // instance's initialize()/createTransaction() can't overlap it.
+        await pendingCleanup?.value
+        pendingCleanup = nil
         
         // Configure and create new SDK instance
         let configurationBuilder = ConfigurationBuilder()
