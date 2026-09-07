@@ -443,7 +443,11 @@ final class Gr4vy3DSService {
     ///   - timeoutMinutes: Challenge timeout in minutes
     /// - Returns: Tuple containing status code and transaction ID
     /// - Throws: Gr4vyError if challenge fails
-    private func performChallengeFlow(
+    ///
+    /// Internal rather than private so tests can drive it directly with a fake
+    /// `Transaction` (an SDK protocol, not a concrete type) without needing a
+    /// real 3DS SDK instance.
+    func performChallengeFlow(
         challenge: Gr4vyChallengeResponse, 
         transaction: Transaction, 
         in viewController: UIViewController, 
@@ -512,7 +516,9 @@ final class Gr4vy3DSService {
 // MARK: - Challenge Types
 
 /// Result of a 3DS challenge flow
-private struct ChallengeResult {
+///
+/// Internal rather than private so tests can assert on it directly.
+struct ChallengeResult {
     let statusCode: String?
     let transactionId: String?
     let hasCancelled: Bool
@@ -537,7 +543,10 @@ private struct ChallengeResult {
 // MARK: - Challenge Status Receiver
 
 /// Internal challenge status receiver to bridge Netcetera callbacks to async/await
-private final class ChallengeReceiver: NSObject, ChallengeStatusReceiver {
+///
+/// Not marked `private` so tests can construct one directly and drive each
+/// `ChallengeStatusReceiver` callback to verify it maps to the right `Result`.
+final class ChallengeReceiver: NSObject, ChallengeStatusReceiver {
     private let onComplete: (Result<ChallengeResult, Error>) -> Void
     
     init(onComplete: @escaping (Result<ChallengeResult, Error>) -> Void) {

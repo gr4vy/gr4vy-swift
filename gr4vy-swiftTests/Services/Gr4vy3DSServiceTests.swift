@@ -6,6 +6,7 @@
 //
 
 @testable import gr4vy_swift
+import ThreeDS_SDK
 import UIKit
 import XCTest
 
@@ -798,25 +799,298 @@ final class Gr4vy3DSServiceTests: XCTestCase {
     }
     
     // MARK: - Static Helper Method Tests
-    
-    func testPrepareChallengeParametersDocumentation() throws {
-        // Given - This test documents the expected structure for ChallengeParameters
-        // Since prepareChallengeParameters is static and private, we document its requirements
-        let expectedServerTransactionId = "server_txn_123"
-        let expectedAcsTransactionId = "acs_txn_456"
-        let expectedAcsReferenceNumber = "acs_ref_789"
-        let expectedAcsSignedContent = "signed_content_abc"
-        
-        // When - These are the fields that should be passed to ChallengeParameters
-        // The method should create a ChallengeParameters object with these values
-        
-        // Then - Document the expected behavior
-        XCTAssertFalse(expectedServerTransactionId.isEmpty)
-        XCTAssertFalse(expectedAcsTransactionId.isEmpty)
-        XCTAssertFalse(expectedAcsReferenceNumber.isEmpty)
-        XCTAssertFalse(expectedAcsSignedContent.isEmpty)
+
+    func testPrepareChallengeParametersMapsAllFields() throws {
+        // Given
+        let challenge = Gr4vyChallengeResponse(
+            serverTransactionId: "server_txn_123",
+            acsTransactionId: "acs_txn_456",
+            acsReferenceNumber: "acs_ref_789",
+            acsRenderingType: nil,
+            acsSignedContent: "signed_content_abc"
+        )
+        let transaction = FakeTransaction()
+
+        // When
+        let params = Gr4vy3DSService.prepareChallengeParameters(challenge, transaction: transaction)
+
+        // Then
+        XCTAssertEqual(params.get3DSServerTransactionID(), "server_txn_123")
+        XCTAssertEqual(params.getAcsTransactionID(), "acs_txn_456")
+        XCTAssertEqual(params.getAcsRefNumber(), "acs_ref_789")
+        XCTAssertEqual(params.getAcsSignedContent(), "signed_content_abc")
     }
-    
+
+    // MARK: - ChallengeReceiver Tests
+    //
+    // `ChallengeStatusReceiver` is an SDK protocol, and `ChallengeReceiver` maps
+    // each of its five callbacks onto a `Result<ChallengeResult, Error>`. Four
+    // of the five are directly testable: `cancelled()`/`timedout()` take no
+    // arguments, and `ProtocolErrorEvent`/`RuntimeErrorEvent` have public
+    // initializers. `completed(completionEvent:)` is not directly testable this
+    // way — `CompletionEvent` has no public initializer (SDK-internal
+    // construction only) — so that mapping stays covered by the manual sandbox
+    // pass instead.
+
+    func testChallengeReceiverMapsCancelledToSuccess() throws {
+        // Given
+        var captured: Result<ChallengeResult, Error>?
+        let receiver = ChallengeReceiver { captured = $0 }
+
+        // When
+        receiver.cancelled()
+
+        // Then
+        let result = try XCTUnwrap(captured)
+        switch result {
+        case .success(let challengeResult):
+            XCTAssertTrue(challengeResult.hasCancelled)
+            XCTAssertFalse(challengeResult.hasTimedOut)
+        case .failure(let error):
+            XCTFail("Expected success, got \(error)")
+        }
+    }
+
+    func testChallengeReceiverMapsTimedoutToSuccess() throws {
+        // Given
+        var captured: Result<ChallengeResult, Error>?
+        let receiver = ChallengeReceiver { captured = $0 }
+
+        // When
+        receiver.timedout()
+
+        // Then
+        let result = try XCTUnwrap(captured)
+        switch result {
+        case .success(let challengeResult):
+            XCTAssertTrue(challengeResult.hasTimedOut)
+            XCTAssertFalse(challengeResult.hasCancelled)
+        case .failure(let error):
+            XCTFail("Expected success, got \(error)")
+        }
+    }
+
+    func testChallengeReceiverMapsProtocolErrorToFailure() throws {
+        // Given
+        var captured: Result<ChallengeResult, Error>?
+        let receiver = ChallengeReceiver { captured = $0 }
+        let errorMessage = ErrorMessage(
+            transactionID: "txn_123",
+            errorCode: "203",
+            errorDescription: "Data element not in the required format",
+            errorDetail: "acsTransID",
+            errorComponent: "C",
+            errorMessageType: "Erro",
+            errorMessageVersionNumber: "2.2.0"
+        )
+        let event = ProtocolErrorEvent(sdkTransactionID: "txn_123", errorMessage: errorMessage)
+
+        // When
+        receiver.protocolError(protocolErrorEvent: event)
+
+        // Then
+        let result = try XCTUnwrap(captured)
+        switch result {
+        case .success:
+            XCTFail("Expected failure")
+        case .failure(let error):
+            let message = try XCTUnwrap(error as? Gr4vyError)
+            if case .threeDSError(let description) = message {
+                XCTAssertTrue(description.contains("203"))
+            } else {
+                XCTFail("Expected .threeDSError, got \(message)")
+            }
+        }
+    }
+
+    func testChallengeReceiverMapsRuntimeErrorToFailure() throws {
+        // Given
+        var captured: Result<ChallengeResult, Error>?
+        let receiver = ChallengeReceiver { captured = $0 }
+        let event = RuntimeErrorEvent(errorCode: "500", errorMessage: "SDK internal failure")
+
+        // When
+        receiver.runtimeError(runtimeErrorEvent: event)
+
+        // Then
+        let result = try XCTUnwrap(captured)
+        switch result {
+        case .success:
+            XCTFail("Expected failure")
+        case .failure(let error):
+            let message = try XCTUnwrap(error as? Gr4vyError)
+            if case .threeDSError(let description) = message {
+                XCTAssertTrue(description.contains("500"))
+                XCTAssertTrue(description.contains("SDK internal failure"))
+            } else {
+                XCTFail("Expected .threeDSError, got \(message)")
+            }
+        }
+    }
+
+    // MARK: - Challenge Flow Tests
+    //
+    // `Transaction` is an SDK protocol, so `FakeTransaction` (Helpers.swift) can
+    // stand in for a real 3DS transaction and drive `performChallengeFlow`
+    // through its async paths without a live SDK instance.
+    //
+    // Not covered here: `doChallenge` throwing *after* the receiver has already
+    // resumed the continuation. That's the double-resume risk raised in review,
+    // but triggering it crashes the process (a Swift concurrency continuation
+    // misuse is a fatal trap, not a catchable error) rather than failing a test
+    // cleanly — so it isn't safe to assert on until the production code adds a
+    // resume-once guard.
+
+    func testPerformChallengeFlowReturnsCancelledResult() async throws {
+        // Given
+        let fakeTransaction = FakeTransaction()
+        fakeTransaction.doChallengeBehavior = { receiver in
+            receiver.cancelled()
+        }
+        let challenge = Gr4vyChallengeResponse(
+            serverTransactionId: "server_txn",
+            acsTransactionId: "acs_txn",
+            acsReferenceNumber: "acs_ref",
+            acsRenderingType: nil,
+            acsSignedContent: "signed_content"
+        )
+
+        // When
+        let result = try await threeDSService.performChallengeFlow(
+            challenge: challenge,
+            transaction: fakeTransaction,
+            in: UIViewController(),
+            timeoutMinutes: 5
+        )
+
+        // Then
+        XCTAssertTrue(result.hasCancelled)
+        XCTAssertFalse(result.hasTimedOut)
+        XCTAssertEqual(fakeTransaction.doChallengeCallCount, 1)
+    }
+
+    func testPerformChallengeFlowReturnsTimedOutResult() async throws {
+        // Given
+        let fakeTransaction = FakeTransaction()
+        fakeTransaction.doChallengeBehavior = { receiver in
+            receiver.timedout()
+        }
+        let challenge = Gr4vyChallengeResponse(
+            serverTransactionId: "server_txn",
+            acsTransactionId: "acs_txn",
+            acsReferenceNumber: "acs_ref",
+            acsRenderingType: nil,
+            acsSignedContent: "signed_content"
+        )
+
+        // When
+        let result = try await threeDSService.performChallengeFlow(
+            challenge: challenge,
+            transaction: fakeTransaction,
+            in: UIViewController(),
+            timeoutMinutes: 5
+        )
+
+        // Then
+        XCTAssertTrue(result.hasTimedOut)
+        XCTAssertFalse(result.hasCancelled)
+    }
+
+    func testPerformChallengeFlowPropagatesReceiverFailure() async throws {
+        // Given
+        let fakeTransaction = FakeTransaction()
+        fakeTransaction.doChallengeBehavior = { receiver in
+            receiver.runtimeError(runtimeErrorEvent: RuntimeErrorEvent(errorCode: "500", errorMessage: "boom"))
+        }
+        let challenge = Gr4vyChallengeResponse(
+            serverTransactionId: "server_txn",
+            acsTransactionId: "acs_txn",
+            acsReferenceNumber: "acs_ref",
+            acsRenderingType: nil,
+            acsSignedContent: "signed_content"
+        )
+
+        // When / Then
+        do {
+            _ = try await threeDSService.performChallengeFlow(
+                challenge: challenge,
+                transaction: fakeTransaction,
+                in: UIViewController(),
+                timeoutMinutes: 5
+            )
+            XCTFail("Expected an error to be thrown")
+        } catch let error as Gr4vyError {
+            if case .threeDSError(let description) = error {
+                XCTAssertTrue(description.contains("boom"))
+            } else {
+                XCTFail("Expected .threeDSError, got \(error)")
+            }
+        }
+    }
+
+    func testPerformChallengeFlowPropagatesDoChallengeThrowingDirectly() async throws {
+        // `doChallenge` throwing without ever invoking the receiver — e.g. the
+        // SDK rejecting the challenge parameters before presenting UI.
+        // Given
+        let fakeTransaction = FakeTransaction()
+        fakeTransaction.doChallengeBehavior = { _ in
+            throw Gr4vyError.threeDSError("challenge rejected")
+        }
+        let challenge = Gr4vyChallengeResponse(
+            serverTransactionId: "server_txn",
+            acsTransactionId: "acs_txn",
+            acsReferenceNumber: "acs_ref",
+            acsRenderingType: nil,
+            acsSignedContent: "signed_content"
+        )
+
+        // When / Then
+        do {
+            _ = try await threeDSService.performChallengeFlow(
+                challenge: challenge,
+                transaction: fakeTransaction,
+                in: UIViewController(),
+                timeoutMinutes: 5
+            )
+            XCTFail("Expected an error to be thrown")
+        } catch let error as Gr4vyError {
+            if case .threeDSError(let description) = error {
+                XCTAssertTrue(description.contains("challenge rejected"))
+            } else {
+                XCTFail("Expected .threeDSError, got \(error)")
+            }
+        }
+    }
+
+    func testPerformChallengeFlowSucceedsWhenProgressViewUnavailable() async throws {
+        // The progress dialog is best-effort; its failure must not block the
+        // challenge itself.
+        // Given
+        let fakeTransaction = FakeTransaction()
+        fakeTransaction.getProgressViewThrows = true
+        fakeTransaction.doChallengeBehavior = { receiver in
+            receiver.cancelled()
+        }
+        let challenge = Gr4vyChallengeResponse(
+            serverTransactionId: "server_txn",
+            acsTransactionId: "acs_txn",
+            acsReferenceNumber: "acs_ref",
+            acsRenderingType: nil,
+            acsSignedContent: "signed_content"
+        )
+
+        // When
+        let result = try await threeDSService.performChallengeFlow(
+            challenge: challenge,
+            transaction: fakeTransaction,
+            in: UIViewController(),
+            timeoutMinutes: 5
+        )
+
+        // Then
+        XCTAssertTrue(result.hasCancelled)
+    }
+
     // MARK: - ChallengeResponse Model Tests
     
     func testChallengeResponseDecoding() throws {
