@@ -15,13 +15,11 @@ internal struct Version {
 ### Files that automatically read from Version.swift:
 
 1. **`gr4vy-swift/Gr4vySDK.swift`** - Uses `Version.current` for the public API
-2. **`gr4vy-swift.podspec`** - Extracts version using Ruby regex
-3. **`VERSION`** - Plain text file for external tools (updated by script)
+2. **`VERSION`** - Plain text file for external tools (updated by script)
 
 ### Distribution methods:
 
 - **Swift Package Manager (SPM)**: Uses Git tags for versioning
-- **CocoaPods**: Reads from `Version.swift` via podspec
 - **Manual Integration**: Uses `Gr4vySDK.version` property
 
 ## Updating the version
