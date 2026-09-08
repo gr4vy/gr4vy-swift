@@ -25,7 +25,12 @@ final class Gr4vy3DSService {
     private var server: Gr4vyServer
     private var transaction: Transaction?
     private var threeDS2Service: ThreeDS2Service?
-    
+
+    // Tracks the detached cleanup fired by `cleanupTransaction()` so a subsequent
+    // authentication can await it before standing up a new SDK instance, even
+    // though `threeDS2Service` itself has already been cleared by then.
+    private var pendingCleanup: Task<Void, Never>?
+
     // Global static transaction to prevent deallocation during challenge
     private static var globalTransaction: Transaction?
     private var progressView: ProgressDialog?
@@ -92,12 +97,24 @@ final class Gr4vy3DSService {
     private func cleanupTransaction() {
         Gr4vyLogger.debug("Cleaning up 3DS resources")
         
-        // Clean up SDK if exists
+        // Clean up SDK if exists.
+        //
+        // cleanup() became async in 3DS SDK 2.7.0.0, but this method must stay
+        // synchronous: one caller invokes it from a `defer` block, and Swift does
+        // not permit `await` there. Detaching is safe because cleanup is already
+        // best-effort — errors were swallowed before too — and the task holds the
+        // service alive until it finishes, even though the property is cleared
+        // immediately below. The task is stashed in `pendingCleanup` so the next
+        // `performThreeDSAuthentication` call can await it before creating a new
+        // service, preserving the serialization this used to get for free when
+        // cleanup() was synchronous.
         if let service = self.threeDS2Service {
-            do {
-                try service.cleanup()
-            } catch {
-                Gr4vyLogger.error("3DS cleanup error: \(error.localizedDescription)")
+            pendingCleanup = Task {
+                do {
+                    try await service.cleanup()
+                } catch {
+                    Gr4vyLogger.error("3DS cleanup error: \(error.localizedDescription)")
+                }
             }
         }
         
@@ -219,15 +236,24 @@ final class Gr4vy3DSService {
         viewController: UIViewController
     ) async throws -> Gr4vyTokenizeResult {
         Gr4vyLogger.debug("Initializing 3DS SDK")
-        
-        // Clean up any existing SDK instance
+
+        // Clean up any existing SDK instance. Awaited rather than detached: this
+        // must finish before a new ThreeDS2ServiceSDK is created below.
         if let existingService = self.threeDS2Service {
             do {
-                try existingService.cleanup()
+                try await existingService.cleanup()
             } catch {
                 Gr4vyLogger.error("Cleanup error: \(error.localizedDescription)")
             }
         }
+
+        // `cleanupTransaction()` (called at the end of every previous flow) has
+        // already nilled `threeDS2Service` by this point, so the guard above
+        // never actually finds a service to await — the real prior cleanup, if
+        // any, is still running detached. Wait for it here so this new
+        // instance's initialize()/createTransaction() can't overlap it.
+        await pendingCleanup?.value
+        pendingCleanup = nil
         
         // Configure and create new SDK instance
         let configurationBuilder = ConfigurationBuilder()
@@ -246,19 +272,17 @@ final class Gr4vy3DSService {
         // Initialize SDK
         let uiMap = Gr4vyThreeDSUiCustomizationMapper.map(uiCustomization)
         
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            threeDS2Service.initialize(configParameters, locale: nil, uiCustomizationMap: uiMap, success: {
-                Gr4vyLogger.debug("3DS SDK initialization complete - proceeding with transaction creation")
-                continuation.resume()
-            }, failure: { error in
-                Gr4vyLogger.error("3DS SDK initialization failed - throwing error")
-                continuation.resume(throwing: Gr4vyError.threeDSError("ThreeDS2Service initialization failed: \(error.localizedDescription)"))
-            })
+        do {
+            try await threeDS2Service.initialize(configParameters, locale: nil, uiCustomization: uiMap)
+            Gr4vyLogger.debug("3DS SDK initialization complete - proceeding with transaction creation")
+        } catch {
+            Gr4vyLogger.error("3DS SDK initialization failed - throwing error")
+            throw Gr4vyError.threeDSError("ThreeDS2Service initialization failed: \(error.localizedDescription)")
         }
-        
+
         // Create 3DS transaction
         Gr4vyLogger.debug("Creating 3DS transaction with Directory Server ID: \(versioningResponse.directoryServerId), Message Version: \(versioningResponse.messageVersion)")
-        let transaction = try threeDS2Service.createTransaction(
+        let transaction = try await threeDS2Service.createTransaction(
             directoryServerId: versioningResponse.directoryServerId,
             messageVersion: versioningResponse.messageVersion
         )
@@ -419,7 +443,11 @@ final class Gr4vy3DSService {
     ///   - timeoutMinutes: Challenge timeout in minutes
     /// - Returns: Tuple containing status code and transaction ID
     /// - Throws: Gr4vyError if challenge fails
-    private func performChallengeFlow(
+    ///
+    /// Internal rather than private so tests can drive it directly with a fake
+    /// `Transaction` (an SDK protocol, not a concrete type) without needing a
+    /// real 3DS SDK instance.
+    func performChallengeFlow(
         challenge: Gr4vyChallengeResponse, 
         transaction: Transaction, 
         in viewController: UIViewController, 
@@ -440,8 +468,10 @@ final class Gr4vy3DSService {
             // Store receiver to prevent deallocation during challenge
             self.challengeReceiver = receiver
 
-            // Execute challenge on main thread (required for UI operations)
-            DispatchQueue.main.async {
+            // Execute challenge on the main actor (required for UI operations).
+            // getProgressView is @MainActor and doChallenge is async as of
+            // 3DS SDK 2.7.0.0, so this can no longer be a DispatchQueue block.
+            Task { @MainActor in
                 do {
                     // Try to show progress dialog (optional - failure is non-fatal)
                     do {
@@ -451,7 +481,7 @@ final class Gr4vy3DSService {
                         Gr4vyLogger.debug("Progress dialog unavailable: \(error.localizedDescription)")
                     }
 
-                    try transaction.doChallenge(
+                    try await transaction.doChallenge(
                         challengeParameters: params,
                         challengeStatusReceiver: receiver,
                         timeOut: timeoutMinutes,
@@ -486,7 +516,9 @@ final class Gr4vy3DSService {
 // MARK: - Challenge Types
 
 /// Result of a 3DS challenge flow
-private struct ChallengeResult {
+///
+/// Internal rather than private so tests can assert on it directly.
+struct ChallengeResult {
     let statusCode: String?
     let transactionId: String?
     let hasCancelled: Bool
@@ -511,7 +543,10 @@ private struct ChallengeResult {
 // MARK: - Challenge Status Receiver
 
 /// Internal challenge status receiver to bridge Netcetera callbacks to async/await
-private final class ChallengeReceiver: NSObject, ChallengeStatusReceiver {
+///
+/// Not marked `private` so tests can construct one directly and drive each
+/// `ChallengeStatusReceiver` callback to verify it maps to the right `Result`.
+final class ChallengeReceiver: NSObject, ChallengeStatusReceiver {
     private let onComplete: (Result<ChallengeResult, Error>) -> Void
     
     init(onComplete: @escaping (Result<ChallengeResult, Error>) -> Void) {

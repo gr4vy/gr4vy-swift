@@ -5,7 +5,6 @@ Developer-friendly & type-safe Swift SDK specifically catered to leverage *Gr4vy
 <div align="left">
     <img alt="Swift" src="https://img.shields.io/badge/Swift-5.7_5.8_5.9-orange?style=for-the-badge">
     <img alt="Platforms" src="https://img.shields.io/badge/Platforms-iOS-yellowgreen?style=for-the-badge">
-    <img alt="CocoaPods Compatible" src="https://img.shields.io/cocoapods/v/gr4vy-swift.svg?style=for-the-badge">
     <img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/gr4vy/gr4vy-swift/ios.yml?branch=main&style=for-the-badge">
 </div>
 
@@ -21,7 +20,6 @@ A [SwiftUI client app](https://github.com/gr4vy/gr4vy-swift-client-app) and [UIK
   - [Getting started](#getting-started)
   - [Minimum Requirements](#minimum-requirements)
   - [Swift Package Manager](#swift-package-manager)
-  - [CocoaPods](#cocoapods)
 - [SDK Example Usage](#sdk-example-usage)
   - [Example](#example)
 - [Merchant account ID selection](#merchant-account-id-selection)
@@ -67,22 +65,8 @@ Add the following to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.0.2")
+    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.1.0")
 ]
-```
-
-### CocoaPods
-
-Add the following to your `Podfile`:
-
-```ruby
-pod 'gr4vy-swift', '~> 1.0.2'
-```
-
-Then run:
-
-```bash
-pod install
 ```
 <!-- End SDK Installation [installation] -->
 

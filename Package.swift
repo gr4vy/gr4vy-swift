@@ -14,13 +14,13 @@ let package = Package(
             targets: ["gr4vy-swift"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/ios-3ds-sdk/SPM.git", exact: "2.5.32"),
+        .package(url: "https://github.com/netceteragroup/ios-3ds-sdk-spm.git", exact: "2.7.00"),
     ],
     targets: [
         .target(
             name: "gr4vy-swift",
             dependencies: [
-                .product(name: "ThreeDS_SDK", package: "SPM"),
+                .product(name: "ThreeDS_SDK", package: "ios-3ds-sdk-spm"),
             ],
             path: "gr4vy-swift",
             resources: [
