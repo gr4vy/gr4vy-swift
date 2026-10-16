@@ -25,7 +25,7 @@ class Gr4vyBuyersPaymentMethodsTests: XCTestCase {
         let encoder = JSONEncoder()
         let lastUsedAtData = try encoder.encode(Gr4vySortBy.lastUsedAt)
 
-        let lastUsedAtJson = String(data: lastUsedAtData, encoding: .utf8)!
+        let lastUsedAtJson = try XCTUnwrap(String(data: lastUsedAtData, encoding: .utf8))
 
         XCTAssertEqual(lastUsedAtJson, "\"last_used_at\"")
 
@@ -55,8 +55,8 @@ class Gr4vyBuyersPaymentMethodsTests: XCTestCase {
         let ascData = try encoder.encode(Gr4vyOrderBy.asc)
         let descData = try encoder.encode(Gr4vyOrderBy.desc)
 
-        let ascJson = String(data: ascData, encoding: .utf8)!
-        let descJson = String(data: descData, encoding: .utf8)!
+        let ascJson = try XCTUnwrap(String(data: ascData, encoding: .utf8))
+        let descJson = try XCTUnwrap(String(data: descData, encoding: .utf8))
 
         XCTAssertEqual(ascJson, "\"asc\"")
         XCTAssertEqual(descJson, "\"desc\"")
@@ -151,7 +151,7 @@ class Gr4vyBuyersPaymentMethodsTests: XCTestCase {
         let data = try encoder.encode(original)
 
         // Verify JSON structure
-        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertEqual(json["buyer_id"] as? String, "buyer_123")
         XCTAssertEqual(json["buyer_external_identifier"] as? String, "ext_456")
         XCTAssertEqual(json["sort_by"] as? String, "last_used_at")
@@ -209,7 +209,7 @@ class Gr4vyBuyersPaymentMethodsTests: XCTestCase {
         }
         """
 
-        let data = json.data(using: .utf8)!
+        let data = Data(json.utf8)
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Gr4vyBuyersPaymentMethods.self, from: data)
 
@@ -229,7 +229,7 @@ class Gr4vyBuyersPaymentMethodsTests: XCTestCase {
         }
         """
 
-        let data = json.data(using: .utf8)!
+        let data = Data(json.utf8)
         let decoder = JSONDecoder()
         let decoded = try decoder.decode(Gr4vyBuyersPaymentMethods.self, from: data)
 
@@ -249,7 +249,7 @@ class Gr4vyBuyersPaymentMethodsTests: XCTestCase {
         }
         """
 
-        let data = json.data(using: .utf8)!
+        let data = Data(json.utf8)
         let decoder = JSONDecoder()
 
         XCTAssertThrowsError(try decoder.decode(Gr4vyBuyersPaymentMethods.self, from: data)) { error in
@@ -265,7 +265,7 @@ class Gr4vyBuyersPaymentMethodsTests: XCTestCase {
         }
         """
 
-        let data = json.data(using: .utf8)!
+        let data = Data(json.utf8)
         let decoder = JSONDecoder()
 
         XCTAssertThrowsError(try decoder.decode(Gr4vyBuyersPaymentMethods.self, from: data)) { error in

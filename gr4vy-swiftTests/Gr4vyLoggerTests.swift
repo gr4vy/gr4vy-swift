@@ -88,18 +88,18 @@ class Gr4vyLoggerTests: XCTestCase {
 
     // MARK: - Data Object Handling Tests
     func testDataObjectLogging() {
-        let testData = "test data".data(using: .utf8)!
+        let testData = Data("test data".utf8)
 
         XCTAssertNoThrow(Gr4vyLogger.debug(testData))
     }
 
     func testDataObjectWithJSON() {
-        let jsonData = """
+        let jsonData = Data("""
         {
             "token": "secret_token",
             "number": "4111111111111111"
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         XCTAssertNoThrow(Gr4vyLogger.debug(jsonData))
     }

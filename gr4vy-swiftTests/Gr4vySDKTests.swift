@@ -49,7 +49,7 @@ final class Gr4vySDKTests: XCTestCase {
         )
     }
 
-    func testUserAgent() {
+    func testUserAgent() throws {
         // Test that user agent is properly formatted
         let userAgent = Gr4vySDK.userAgent
         XCTAssertFalse(userAgent.isEmpty)
@@ -67,7 +67,7 @@ final class Gr4vySDKTests: XCTestCase {
         // Assert the overall shape independently of the constants' values, so a
         // change to how userAgent is composed still fails even though the
         // component checks above derive from those constants.
-        let formatRegex = try! NSRegularExpression(
+        let formatRegex = try NSRegularExpression(
             pattern: "^[^/ ]+/[^ ]+ \\(iOS \\d+\\.\\d+\\.\\d+\\)$",
             options: []
         )

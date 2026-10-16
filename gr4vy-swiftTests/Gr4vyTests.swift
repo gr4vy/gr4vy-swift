@@ -412,7 +412,7 @@ final class Gr4vyTests: XCTestCase {
     func testTokenizeAsyncMethod() async throws {
         // Given
         let mockSession = MockURLSession()
-        mockSession.mockData = "{}".data(using: .utf8)
+        mockSession.mockData = Data("{}".utf8)
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test.gr4vy.app/checkout/sessions/session_123/fields")!,
             statusCode: 200,
@@ -446,7 +446,7 @@ final class Gr4vyTests: XCTestCase {
     func testTokenizeCompletionMethod() throws {
         // Given
         let mockSession = MockURLSession()
-        mockSession.mockData = "{}".data(using: .utf8)
+        mockSession.mockData = Data("{}".utf8)
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.test.gr4vy.app/checkout/sessions/session_456/fields")!,
             statusCode: 200,

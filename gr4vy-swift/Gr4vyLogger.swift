@@ -24,22 +24,30 @@ public struct Gr4vyLogger {
     // MARK: - Logging Methods
     
     public static func log(_ message: String) {
-        guard isEnabled else { return }
+        guard isEnabled else {
+            return
+        }
         print("🔍 [Gr4vy] \(maskSensitiveInfo(message))")
     }
     
     public static func error(_ message: String) {
-        guard isEnabled else { return }
+        guard isEnabled else {
+            return
+        }
         print("❌ [Gr4vy] \(maskSensitiveInfo(message))")
     }
     
     public static func network(_ message: String) {
-        guard isEnabled else { return }
+        guard isEnabled else {
+            return
+        }
         print("🌐 [Gr4vy] \(maskSensitiveInfo(message))")
     }
     
     public static func debug(_ object: Any) {
-        guard isEnabled else { return }
+        guard isEnabled else {
+            return
+        }
         print("🔍 [Gr4vy] Debug:")
 
         // Handle Data objects specially to avoid logging sensitive request bodies

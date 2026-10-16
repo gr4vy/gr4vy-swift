@@ -260,7 +260,7 @@ final class Gr4vyPaymentOptionsServiceTests: XCTestCase {
         XCTAssertNotNil(mockHTTPClient.lastBody)
 
         // Verify cart items are included in request body
-        let bodyJSON = try JSONSerialization.jsonObject(with: mockHTTPClient.lastBody!, options: []) as? [String: Any]
+        let bodyJSON = try JSONSerialization.jsonObject(with: XCTUnwrap(mockHTTPClient.lastBody), options: []) as? [String: Any]
         XCTAssertNotNil(bodyJSON?["cart_items"])
     }
 
@@ -310,8 +310,7 @@ final class Gr4vyPaymentOptionsServiceTests: XCTestCase {
         await fulfillment(of: [expectation], timeout: 1.0)
 
         // Then
-        XCTAssertNotNil(capturedResult)
-        switch capturedResult! {
+        switch try XCTUnwrap(capturedResult) {
         case .success(let paymentOptions):
             XCTAssertEqual(paymentOptions.count, 1)
             XCTAssertEqual(paymentOptions[0].method, "card")
@@ -351,8 +350,7 @@ final class Gr4vyPaymentOptionsServiceTests: XCTestCase {
         await fulfillment(of: [expectation], timeout: 1.0)
 
         // Then
-        XCTAssertNotNil(capturedResult)
-        switch capturedResult! {
+        switch try XCTUnwrap(capturedResult) {
         case .success:
             XCTFail("Expected failure")
         case .failure(let error):
@@ -603,7 +601,7 @@ final class Gr4vyPaymentOptionsServiceTests: XCTestCase {
         XCTAssertNotNil(mockHTTPClient.lastBody)
 
         // Verify request body encoding
-        let bodyJSON = try JSONSerialization.jsonObject(with: mockHTTPClient.lastBody!, options: []) as? [String: Any]
+        let bodyJSON = try JSONSerialization.jsonObject(with: XCTUnwrap(mockHTTPClient.lastBody), options: []) as? [String: Any]
         XCTAssertNotNil(bodyJSON)
 
         let metadata = bodyJSON?["metadata"] as? [String: String]
@@ -647,7 +645,7 @@ final class Gr4vyPaymentOptionsServiceTests: XCTestCase {
         XCTAssertNotNil(mockHTTPClient.lastURL)
         XCTAssertNotNil(mockHTTPClient.lastBody)
 
-        let bodyJSON = try JSONSerialization.jsonObject(with: mockHTTPClient.lastBody!, options: []) as? [String: Any]
+        let bodyJSON = try JSONSerialization.jsonObject(with: XCTUnwrap(mockHTTPClient.lastBody), options: []) as? [String: Any]
         XCTAssertNotNil(bodyJSON)
         XCTAssertEqual(bodyJSON?["locale"] as? String, "en-US")
         XCTAssertTrue((bodyJSON?["metadata"] as? [String: String])?.isEmpty == true)
@@ -867,7 +865,8 @@ final class Gr4vyPaymentOptionsServiceTests: XCTestCase {
               "label": "Option \(index)"
             }
             """
-        }.joined(separator: ",")
+        }
+        .joined(separator: ",")
 
         let mockResponseJSON = """
         {
@@ -955,7 +954,7 @@ final class Gr4vyPaymentOptionsServiceTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(mockHTTPClient.lastBody)
-        let bodyJSON = try JSONSerialization.jsonObject(with: mockHTTPClient.lastBody!, options: []) as? [String: Any]
+        let bodyJSON = try JSONSerialization.jsonObject(with: XCTUnwrap(mockHTTPClient.lastBody), options: []) as? [String: Any]
         let cartItemsJSON = bodyJSON?["cart_items"] as? [[String: Any]]
         XCTAssertNotNil(cartItemsJSON)
         XCTAssertEqual(cartItemsJSON?.count, 2)

@@ -2,6 +2,8 @@
 //  Gr4vyThreeDSUiCustomizationMapper.swift
 //  gr4vy-swift
 //
+//  Created by Gr4vy
+//
 //  Internal mapper from Gr4vy UI models to Netcetera UiCustomization types.
 //
 
@@ -14,7 +16,9 @@ enum Gr4vyThreeDSUiCustomizationMapper {
     // raw string. The enum's raw values are the same strings, so the wire
     // behaviour is unchanged.
     static func map(_ map: Gr4vyThreeDSUiCustomizationMap?) -> [UiCustomization.UICustomizationType: UiCustomization]? {
-        guard let map = map else { return nil }
+        guard let map = map else {
+            return nil
+        }
         var result: [UiCustomization.UICustomizationType: UiCustomization] = [:]
         if let light = map.default, let ui = build(from: light) {
             result[.DEFAULT] = ui
@@ -25,6 +29,8 @@ enum Gr4vyThreeDSUiCustomizationMapper {
         return result.isEmpty ? nil : result
     }
     
+    // Maps every UI element in one pass; splitting it up is left to a separate refactor.
+    // swiftlint:disable:next cyclomatic_complexity
     private static func build(from src: Gr4vyThreeDSUiCustomization) -> UiCustomization? {
         let ui = UiCustomization()
         var hasAny = false
@@ -98,13 +104,20 @@ enum Gr4vyThreeDSUiCustomizationMapper {
     
     private static func mapButtonType(_ t: Gr4vyThreeDSButtonType) -> UiCustomization.ButtonType? {
         switch t {
-        case .submit: return UiCustomization.ButtonType.SUBMIT
-        case .`continue`: return UiCustomization.ButtonType.CONTINUE
-        case .next: return UiCustomization.ButtonType.NEXT
-        case .resend: return UiCustomization.ButtonType.RESEND
-        case .openOobApp: return UiCustomization.ButtonType.OPEN_OOB_APP
-        case .addCardholder: return UiCustomization.ButtonType.ADD_CH
-        case .cancel: return UiCustomization.ButtonType.CANCEL
+        case .submit:
+            return UiCustomization.ButtonType.SUBMIT
+        case .`continue`:
+            return UiCustomization.ButtonType.CONTINUE
+        case .next:
+            return UiCustomization.ButtonType.NEXT
+        case .resend:
+            return UiCustomization.ButtonType.RESEND
+        case .openOobApp:
+            return UiCustomization.ButtonType.OPEN_OOB_APP
+        case .addCardholder:
+            return UiCustomization.ButtonType.ADD_CH
+        case .cancel:
+            return UiCustomization.ButtonType.CANCEL
         }
     }
 }

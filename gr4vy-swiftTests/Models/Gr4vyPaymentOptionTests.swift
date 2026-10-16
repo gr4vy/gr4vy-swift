@@ -772,7 +772,7 @@ final class Gr4vyPaymentOptionTests: XCTestCase {
             return XCTFail("Expected PaymentContext")
         }
         XCTAssertNotNil(ctx.requiredFields)
-        XCTAssertTrue(ctx.requiredFields!.isEmpty)
+        XCTAssertTrue(try XCTUnwrap(ctx.requiredFields).isEmpty)
     }
 
     func testPaymentContextWithNullApprovalUI() throws {

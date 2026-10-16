@@ -473,13 +473,13 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let checkoutSessionId = "checkout_session_version_123"
         
         // Mock versioning response
-        let versioningResponse = """
+        let versioningResponse = Data("""
         {
             "directory_server_id": "dir_server_001",
             "message_version": "2.2.0",
             "api_key": "test_api_key_12345"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = versioningResponse
         
@@ -536,11 +536,11 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let checkoutSessionId = "checkout_session_version_decode_error"
         
         // Mock invalid JSON response
-        let invalidResponse = """
+        let invalidResponse = Data("""
         {
             "invalid_field": "unexpected_value"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = invalidResponse
         
@@ -593,13 +593,13 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let checkoutSessionId = "checkout_session_version_completion_success"
         
         // Mock versioning response
-        let versioningResponse = """
+        let versioningResponse = Data("""
         {
             "directory_server_id": "dir_server_002",
             "message_version": "2.1.0",
             "api_key": "test_api_key_67890"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = versioningResponse
         
@@ -682,7 +682,7 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5
         
         // Mock 3DS challenge response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "CHALLENGE",
             "challenge": {
@@ -699,7 +699,7 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
             "transaction_status": null,
             "cardholder_info": null
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
@@ -754,14 +754,14 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5
         
         // Mock 3DS frictionless response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "FINISH",
             "challenge": null,
             "transaction_status": "Y",
             "cardholder_info": "Authentication successful"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
@@ -807,14 +807,14 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5
         
         // Mock 3DS error response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "ERROR",
             "challenge": null,
             "transaction_status": null,
             "cardholder_info": "Authentication failed"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
@@ -864,7 +864,7 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5
         
         // Mock 3DS challenge response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "CHALLENGE",
             "challenge": {
@@ -881,7 +881,7 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
             "transaction_status": null,
             "cardholder_info": null
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
@@ -1013,11 +1013,11 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5
         
         // Mock invalid JSON response
-        let invalidResponse = """
+        let invalidResponse = Data("""
         {
             "invalid_field": "unexpected_value"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = invalidResponse
         
@@ -1062,14 +1062,14 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5
         
         // Mock 3DS frictionless response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "FINISH",
             "challenge": null,
             "transaction_status": "Y",
             "cardholder_info": "Success"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
@@ -1180,14 +1180,14 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 10
         
         // Mock 3DS response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "FINISH",
             "challenge": null,
             "transaction_status": "Y",
             "cardholder_info": null
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
@@ -1262,14 +1262,14 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5 // Should be encoded as "05"
         
         // Mock 3DS response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "FINISH",
             "challenge": null,
             "transaction_status": "Y",
             "cardholder_info": null
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
