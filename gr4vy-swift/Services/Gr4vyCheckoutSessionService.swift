@@ -145,24 +145,25 @@ extension Gr4vyCheckoutSessionService {
         sdkReferenceNumber: String,
         sdkTransactionId: String,
         sdkMaxTimeoutMinutes: Int,
-        completion: @escaping (Result<Gr4vyThreeDSecureResponse, Error>) -> Void) {
-            Task {
-                do {
-                    let result = try await performCreateTransaction(
-                        checkoutSessionId: checkoutSessionId,
-                        sdkAppId: sdkAppId,
-                        sdkEncryptedData: sdkEncryptedData,
-                        sdkEphemeralPubKey: sdkEphemeralPubKey,
-                        sdkReferenceNumber: sdkReferenceNumber,
-                        sdkTransactionId: sdkTransactionId,
-                        sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes
-                    )
-                    completion(.success(result))
-                } catch {
-                    completion(.failure(error))
-                }
+        completion: @escaping (Result<Gr4vyThreeDSecureResponse, Error>) -> Void
+    ) {
+        Task {
+            do {
+                let result = try await performCreateTransaction(
+                    checkoutSessionId: checkoutSessionId,
+                    sdkAppId: sdkAppId,
+                    sdkEncryptedData: sdkEncryptedData,
+                    sdkEphemeralPubKey: sdkEphemeralPubKey,
+                    sdkReferenceNumber: sdkReferenceNumber,
+                    sdkTransactionId: sdkTransactionId,
+                    sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes
+                )
+                completion(.success(result))
+            } catch {
+                completion(.failure(error))
             }
         }
+    }
     
     private func performCreateTransaction(
         checkoutSessionId: String,

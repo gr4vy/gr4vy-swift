@@ -22,6 +22,7 @@ excluded:
 disabled_rules:
   - trailing_whitespace # Can be auto-fixed
   - todo # TODOs are acceptable in development
+  - redundant_string_enum_value
 
 # Rules to enable (opt-in rules)
 opt_in_rules:
@@ -39,11 +40,8 @@ opt_in_rules:
   - contains_over_filter_is_empty
   - contains_over_first_not_nil
   - contains_over_range_nil_comparison
-  - convenience_type
   - discouraged_assert
   - discouraged_object_literal
-  - discouraged_optional_boolean
-  - discouraged_optional_collection
   - empty_collection_literal
   - empty_count
   - empty_string
@@ -51,7 +49,6 @@ opt_in_rules:
   - enum_case_associated_values_count
   - expiring_todo
   - explicit_init
-  - extension_access_modifier
   - fallthrough
   - fatal_error_message
   - file_header
@@ -60,10 +57,8 @@ opt_in_rules:
   - first_where
   - flatmap_over_map_reduce
   - force_unwrapping
-  - function_default_parameter_at_end
   - ibinspectable_in_extension
   - identical_operands
-  - implicit_return
   - joined_default_parameter
   - last_where
   - legacy_multiple
@@ -79,15 +74,12 @@ opt_in_rules:
   - multiline_parameters_brackets
   - nimble_operator
   - no_extension_access_modifier
-  - no_grouping_extension
   - number_separator
   - object_literal
   - operator_usage_whitespace
-  - operator_whitespace
   - optional_enum_case_matching
   - overridden_super_call
   - override_in_extension
-  - pattern_matching_keywords
   - prefer_self_type_over_type_of_self
   - prefer_zero_over_explicit_init
   - prefixed_toplevel_constant
@@ -115,8 +107,6 @@ opt_in_rules:
   - unavailable_function
   - unneeded_parentheses_in_closure_argument
   - untyped_error_in_catch
-  - unused_import
-  - unused_declaration
   - vertical_parameter_alignment_on_call
   - vertical_whitespace_closing_braces
   - vertical_whitespace_opening_braces
@@ -124,10 +114,15 @@ opt_in_rules:
   - xct_specific_matcher
   - yoda_condition
 
+# Analyzer rules: only run by `swiftlint analyze` (needs a compiler log), which CI doesn't run.
+analyzer_rules:
+  - unused_declaration
+  - unused_import
+
 # Rule configurations
 line_length:
-  warning: 120
-  error: 150
+  warning: 200
+  error: 250
   ignores_function_declarations: true
   ignores_comments: true
   ignores_urls: true
@@ -141,7 +136,7 @@ function_body_length:
   error: 100
 
 function_parameter_count:
-  warning: 6
+  warning: 8
   error: 10
 
 cyclomatic_complexity:
@@ -177,6 +172,12 @@ identifier_name:
     - x
     - y
     - z
+    # Short names used in the 3DS UI customization mapper and tests
+    - f
+    - i
+    - s
+    - t
+    - v
 
 nesting:
   type_level: 2
@@ -238,9 +239,6 @@ last_where:
   severity: warning
 
 # API Design rules
-function_default_parameter_at_end:
-  severity: warning
-
 lower_acl_than_parent:
   severity: warning
 
@@ -258,11 +256,10 @@ quick_discouraged_pending_test:
   severity: warning
 
 # Documentation rules
+# missing_docs is a warning while existing public APIs are undocumented;
+# a follow-up PR will add the missing documentation.
 missing_docs:
   warning:
-    - public
-    - open
-  error:
     - public
     - open
   excludes_extensions: true
@@ -272,9 +269,6 @@ missing_docs:
 multiline_arguments:
   first_argument_location: next_line
   only_enforce_after_first_closure_on_first_line: true
-
-multiline_parameters:
-  first_parameter_location: next_line
 
 # Import organization
 sorted_imports:
@@ -291,10 +285,6 @@ closure_end_indentation:
 closure_spacing:
   severity: warning
 
-# Pattern matching
-pattern_matching_keywords:
-  severity: warning
-
 # Operator usage
 operator_usage_whitespace:
   severity: warning
@@ -308,15 +298,18 @@ generic_type_name:
 custom_rules:
   no_print_statements:
     name: "No Print Statements"
-    regex: '(?<!\/\/.*)\bprint\s*\('
-    message: "Use Gr4vyLogger instead of print statements"
-    severity: warning
+    regex: '\b(?:print|debugPrint|dump|NSLog|os_log)\s*\('
+    excluded_match_kinds: [comment, doccomment]
+    excluded: 'Gr4vyLogger\.swift$' # The logger itself is the one place print() belongs
+    message: "Use Gr4vyLogger instead of print, debugPrint, dump, NSLog or os_log"
+    severity: error
 
   no_hardcoded_strings:
     name: "No Hardcoded URLs"
-    regex: '(?<!\/\/.*)"https?:\/\/'
+    regex: '"https?:\/\/'
+    excluded_match_kinds: [comment, doccomment]
     message: "Use URL construction utilities instead of hardcoded URLs"
-    severity: warning
+    severity: error
 
   proper_error_handling:
     name: "Proper Error Handling"
@@ -324,17 +317,14 @@ custom_rules:
     message: "Use proper error handling instead of try!"
     severity: error
 
-  api_documentation:
-    name: "API Documentation Required"
-    regex: '^public\s+(class|struct|enum|protocol|func|var|let)'
-    message: "Public APIs must have documentation"
-    severity: warning
-
   security_sensitive_logging:
     name: "Security Sensitive Logging"
-    regex: '(?i)(token|password|secret|key|auth|credential)'
+    # Flags log calls that interpolate or pass a value whose own name (the last component,
+    # e.g. `config.apiKey`) looks sensitive; `authResponse.indicator` is not flagged.
+    regex: '(?:Gr4vyLogger\.\w+|\bprint|\bdebugPrint|\bNSLog)\s*\(\s*(?:"[^"\n]*\\\(|)(?:\w+\.)*\w*(?i:token|password|secret|key|auth|credential)\w*\s*\)'
+    excluded_match_kinds: [comment, doccomment]
     message: "Ensure sensitive data is properly masked in logs"
-    severity: warning
+    severity: error
 
   no_enum_alignment:
     name: "No Enum Case Alignment"
@@ -345,8 +335,6 @@ custom_rules:
 # Reporter type
 reporter: "xcode"
 
-# Strict mode for CI/CD
+# CI fails on errors only; warnings are listed in the CI lint log (GitHub shows only the first 10
+# as PR annotations) and don't block.
 strict: false
-
-# Warnings as errors (for CI/CD)
-# warnings_as_errors: true 

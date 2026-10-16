@@ -36,12 +36,14 @@ public struct Gr4vyBuyersPaymentMethods: Codable {
     }
 
     // MARK: - Initializer
-    public init(buyerId: String?,
-                buyerExternalIdentifier: String? = nil,
-                sortBy: Gr4vySortBy? = nil,
-                orderBy: Gr4vyOrderBy? = .desc,
-                country: String? = nil,
-                currency: String? = nil) {
+    public init(
+        buyerId: String?,
+        buyerExternalIdentifier: String? = nil,
+        sortBy: Gr4vySortBy? = nil,
+        orderBy: Gr4vyOrderBy? = .desc,
+        country: String? = nil,
+        currency: String? = nil
+    ) {
         self.buyerId = buyerId
         self.buyerExternalIdentifier = buyerExternalIdentifier
         self.sortBy = sortBy

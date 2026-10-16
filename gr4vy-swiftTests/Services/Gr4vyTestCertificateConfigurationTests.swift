@@ -255,7 +255,7 @@ final class Gr4vyTestCertificateConfigurationTests: XCTestCase {
         // Test that UTF-8 encoding works for certificate files
         let testContent = "Test certificate content"
         
-        // Should be able to encode to UTF-8
+        // Should be able to encode to UTF-8 (deliberately exercises the optional String-to-Data API)
         let data = testContent.data(using: .utf8)
         XCTAssertNotNil(data)
         

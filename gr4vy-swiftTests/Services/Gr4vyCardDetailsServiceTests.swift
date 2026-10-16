@@ -224,14 +224,14 @@ final class Gr4vyCardDetailsServiceTests: XCTestCase {
         XCTAssertEqual(result.country, "DE")
         XCTAssertNotNil(result.requiredFields)
 
-        let requiredFields = result.requiredFields!
+        let requiredFields = try XCTUnwrap(result.requiredFields)
         XCTAssertEqual(requiredFields.firstName, true)
         XCTAssertEqual(requiredFields.lastName, true)
         XCTAssertEqual(requiredFields.emailAddress, false)
         XCTAssertNil(requiredFields.phoneNumber)
         XCTAssertEqual(requiredFields.taxId, false)
 
-        let address = requiredFields.address!
+        let address = try XCTUnwrap(requiredFields.address)
         XCTAssertEqual(address.city, true)
         XCTAssertEqual(address.country, false)
         XCTAssertEqual(address.postalCode, true)
@@ -335,7 +335,7 @@ final class Gr4vyCardDetailsServiceTests: XCTestCase {
         let request = Gr4vyCardDetailsRequest(cardDetails: cardDetails)
 
         // Invalid JSON data
-        let invalidData = "{ invalid json }".data(using: .utf8)!
+        let invalidData = Data("{ invalid json }".utf8)
         mockHTTPClient.data = invalidData
 
         // When/Then
@@ -409,7 +409,7 @@ final class Gr4vyCardDetailsServiceTests: XCTestCase {
         let request = Gr4vyCardDetailsRequest(cardDetails: cardDetails)
 
         // Invalid JSON data
-        let invalidData = "{ malformed json".data(using: .utf8)!
+        let invalidData = Data("{ malformed json".utf8)
         mockHTTPClient.data = invalidData
 
         // When
@@ -554,7 +554,7 @@ final class Gr4vyCardDetailsServiceTests: XCTestCase {
         XCTAssertNotNil(mockHTTPClient.lastBody)
 
         // Verify the request body was encoded correctly
-        let bodyJSON = try JSONSerialization.jsonObject(with: mockHTTPClient.lastBody!, options: []) as? [String: Any]
+        let bodyJSON = try JSONSerialization.jsonObject(with: XCTUnwrap(mockHTTPClient.lastBody), options: []) as? [String: Any]
         XCTAssertNotNil(bodyJSON)
 
         let cardDetailsJSON = bodyJSON?["card_details"] as? [String: Any]
@@ -673,7 +673,7 @@ final class Gr4vyCardDetailsServiceTests: XCTestCase {
                 timeout: TimeInterval?
             ) async throws -> Data {
                 capturedMerchantId = merchantId
-                return try JSONEncoder().encode(mockResponse!)
+                return try JSONEncoder().encode(XCTUnwrap(mockResponse))
             }
         }
 
@@ -722,7 +722,7 @@ final class Gr4vyCardDetailsServiceTests: XCTestCase {
                 timeout: TimeInterval?
             ) async throws -> Data {
                 capturedTimeout = timeout
-                return try JSONEncoder().encode(mockResponse!)
+                return try JSONEncoder().encode(XCTUnwrap(mockResponse))
             }
         }
 
@@ -769,7 +769,7 @@ final class Gr4vyCardDetailsServiceTests: XCTestCase {
                 timeout: TimeInterval?
             ) async throws -> Data {
                 capturedTimeout = timeout
-                return try JSONEncoder().encode(mockResponse!)
+                return try JSONEncoder().encode(XCTUnwrap(mockResponse))
             }
         }
 

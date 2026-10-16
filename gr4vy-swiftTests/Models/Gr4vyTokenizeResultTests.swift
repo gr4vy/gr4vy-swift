@@ -89,7 +89,7 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
         XCTAssertNil(result.authentication)
     }
 
-    func testGr4vyTokenizeResultSuccessWithFrictionlessThreeDS() {
+    func testGr4vyTokenizeResultSuccessWithFrictionlessThreeDS() throws {
         // Given - Simulating successful tokenization with frictionless 3DS
         let tokenized = true
         let authentication = Gr4vyAuthentication(
@@ -109,15 +109,15 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
         // Then
         XCTAssertTrue(result.tokenized)
-        XCTAssertNotNil(result.authentication)
-        XCTAssertTrue(result.authentication!.attempted)
-        XCTAssertEqual(result.authentication!.type, "frictionless")
-        XCTAssertEqual(result.authentication!.transactionStatus, "Y")
-        XCTAssertFalse(result.authentication!.hasCancelled)
-        XCTAssertFalse(result.authentication!.hasTimedOut)
+        let auth = try XCTUnwrap(result.authentication)
+        XCTAssertTrue(auth.attempted)
+        XCTAssertEqual(auth.type, "frictionless")
+        XCTAssertEqual(auth.transactionStatus, "Y")
+        XCTAssertFalse(auth.hasCancelled)
+        XCTAssertFalse(auth.hasTimedOut)
     }
 
-    func testGr4vyTokenizeResultSuccessWithChallengeThreeDS() {
+    func testGr4vyTokenizeResultSuccessWithChallengeThreeDS() throws {
         // Given - Simulating successful tokenization with challenge 3DS
         let tokenized = true
         let authentication = Gr4vyAuthentication(
@@ -137,10 +137,10 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
         // Then
         XCTAssertTrue(result.tokenized)
-        XCTAssertNotNil(result.authentication)
-        XCTAssertTrue(result.authentication!.attempted)
-        XCTAssertEqual(result.authentication!.type, "challenge")
-        XCTAssertEqual(result.authentication!.transactionStatus, "Y")
+        let auth = try XCTUnwrap(result.authentication)
+        XCTAssertTrue(auth.attempted)
+        XCTAssertEqual(auth.type, "challenge")
+        XCTAssertEqual(auth.transactionStatus, "Y")
     }
 
     // MARK: - Failure Scenarios
@@ -157,7 +157,7 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
         XCTAssertNil(result.authentication)
     }
 
-    func testGr4vyTokenizeResultFailureWithFailedAuthentication() {
+    func testGr4vyTokenizeResultFailureWithFailedAuthentication() throws {
         // Given - Simulating failed tokenization with failed 3DS
         let tokenized = false
         let authentication = Gr4vyAuthentication(
@@ -177,12 +177,12 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
         // Then
         XCTAssertFalse(result.tokenized)
-        XCTAssertNotNil(result.authentication)
-        XCTAssertTrue(result.authentication!.attempted)
-        XCTAssertEqual(result.authentication!.transactionStatus, "N")
+        let auth = try XCTUnwrap(result.authentication)
+        XCTAssertTrue(auth.attempted)
+        XCTAssertEqual(auth.transactionStatus, "N")
     }
 
-    func testGr4vyTokenizeResultFailureWithCancelledAuthentication() {
+    func testGr4vyTokenizeResultFailureWithCancelledAuthentication() throws {
         // Given - Simulating failed tokenization due to user cancellation
         let tokenized = false
         let authentication = Gr4vyAuthentication(
@@ -202,12 +202,12 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
         // Then
         XCTAssertFalse(result.tokenized)
-        XCTAssertNotNil(result.authentication)
-        XCTAssertTrue(result.authentication!.hasCancelled)
-        XCTAssertFalse(result.authentication!.hasTimedOut)
+        let auth = try XCTUnwrap(result.authentication)
+        XCTAssertTrue(auth.hasCancelled)
+        XCTAssertFalse(auth.hasTimedOut)
     }
 
-    func testGr4vyTokenizeResultFailureWithTimedOutAuthentication() {
+    func testGr4vyTokenizeResultFailureWithTimedOutAuthentication() throws {
         // Given - Simulating failed tokenization due to timeout
         let tokenized = false
         let authentication = Gr4vyAuthentication(
@@ -227,12 +227,12 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
         // Then
         XCTAssertFalse(result.tokenized)
-        XCTAssertNotNil(result.authentication)
-        XCTAssertFalse(result.authentication!.hasCancelled)
-        XCTAssertTrue(result.authentication!.hasTimedOut)
+        let auth = try XCTUnwrap(result.authentication)
+        XCTAssertFalse(auth.hasCancelled)
+        XCTAssertTrue(auth.hasTimedOut)
     }
 
-    func testGr4vyTokenizeResultFailureWithAuthenticationError() {
+    func testGr4vyTokenizeResultFailureWithAuthenticationError() throws {
         // Given - Simulating failed tokenization with authentication error
         let tokenized = false
         let authentication = Gr4vyAuthentication(
@@ -252,14 +252,14 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
         // Then
         XCTAssertFalse(result.tokenized)
-        XCTAssertNotNil(result.authentication)
-        XCTAssertEqual(result.authentication!.type, "error")
-        XCTAssertEqual(result.authentication!.transactionStatus, "U")
+        let auth = try XCTUnwrap(result.authentication)
+        XCTAssertEqual(auth.type, "error")
+        XCTAssertEqual(auth.transactionStatus, "U")
     }
 
     // MARK: - Authentication Not Attempted Scenarios
 
-    func testGr4vyTokenizeResultWithAuthenticationNotAttempted() {
+    func testGr4vyTokenizeResultWithAuthenticationNotAttempted() throws {
         // Given - Simulating tokenization where 3DS was not attempted
         let tokenized = true
         let authentication = Gr4vyAuthentication(
@@ -277,15 +277,15 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
         // Then
         XCTAssertTrue(result.tokenized)
-        XCTAssertNotNil(result.authentication)
-        XCTAssertFalse(result.authentication!.attempted)
-        XCTAssertNil(result.authentication!.type)
-        XCTAssertNil(result.authentication!.transactionStatus)
+        let auth = try XCTUnwrap(result.authentication)
+        XCTAssertFalse(auth.attempted)
+        XCTAssertNil(auth.type)
+        XCTAssertNil(auth.transactionStatus)
     }
 
     // MARK: - Complex Scenarios
 
-    func testGr4vyTokenizeResultSuccessfulEndToEndFlow() {
+    func testGr4vyTokenizeResultSuccessfulEndToEndFlow() throws {
         // Given - Complete successful flow with all authentication details
         let authentication = Gr4vyAuthentication(
             attempted: true,
@@ -302,9 +302,8 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
         // Then - Verify complete state
         XCTAssertTrue(result.tokenized)
-        XCTAssertNotNil(result.authentication)
         
-        let auth = result.authentication!
+        let auth = try XCTUnwrap(result.authentication)
         XCTAssertTrue(auth.attempted)
         XCTAssertEqual(auth.type, "frictionless")
         XCTAssertEqual(auth.transactionStatus, "Y")
@@ -313,7 +312,7 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
         XCTAssertNotNil(auth.cardholderInfo)
     }
 
-    func testGr4vyTokenizeResultPartialSuccessScenario() {
+    func testGr4vyTokenizeResultPartialSuccessScenario() throws {
         // Given - Authentication attempted but resulted in specific status
         let authentication = Gr4vyAuthentication(
             attempted: true,
@@ -330,9 +329,9 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
         // Then
         XCTAssertTrue(result.tokenized)
-        XCTAssertNotNil(result.authentication)
-        XCTAssertTrue(result.authentication!.attempted)
-        XCTAssertEqual(result.authentication!.transactionStatus, "A")
+        let auth = try XCTUnwrap(result.authentication)
+        XCTAssertTrue(auth.attempted)
+        XCTAssertEqual(auth.transactionStatus, "A")
     }
 
     func testGr4vyTokenizeResultWithAllAuthenticationStatusCodes() {
@@ -370,7 +369,7 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
         XCTAssertNil(result.authentication)
     }
 
-    func testGr4vyTokenizeResultWithCompleteAuthenticationData() {
+    func testGr4vyTokenizeResultWithCompleteAuthenticationData() throws {
         // Given - All possible authentication fields populated
         let authentication = Gr4vyAuthentication(
             attempted: true,
@@ -387,7 +386,7 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
         // Then - All fields should be preserved
         XCTAssertTrue(result.tokenized)
-        let auth = result.authentication!
+        let auth = try XCTUnwrap(result.authentication)
         XCTAssertTrue(auth.attempted)
         XCTAssertEqual(auth.type, "challenge")
         XCTAssertEqual(auth.transactionStatus, "Y")
@@ -428,7 +427,7 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
     // MARK: - Mixed State Tests
 
-    func testGr4vyTokenizeResultTokenizedTrueButAuthenticationFailed() {
+    func testGr4vyTokenizeResultTokenizedTrueButAuthenticationFailed() throws {
         // Given - Edge case where tokenization succeeded but auth failed
         let authentication = Gr4vyAuthentication(
             attempted: true,
@@ -445,11 +444,11 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
         // Then
         XCTAssertTrue(result.tokenized)
-        XCTAssertNotNil(result.authentication)
-        XCTAssertEqual(result.authentication!.transactionStatus, "N")
+        let auth = try XCTUnwrap(result.authentication)
+        XCTAssertEqual(auth.transactionStatus, "N")
     }
 
-    func testGr4vyTokenizeResultTokenizedFalseButAuthenticationSucceeded() {
+    func testGr4vyTokenizeResultTokenizedFalseButAuthenticationSucceeded() throws {
         // Given - Edge case where auth succeeded but tokenization failed
         let authentication = Gr4vyAuthentication(
             attempted: true,
@@ -466,7 +465,7 @@ final class Gr4vyTokenizeResultTests: XCTestCase {
 
         // Then
         XCTAssertFalse(result.tokenized)
-        XCTAssertNotNil(result.authentication)
-        XCTAssertEqual(result.authentication!.transactionStatus, "Y")
+        let auth = try XCTUnwrap(result.authentication)
+        XCTAssertEqual(auth.transactionStatus, "Y")
     }
 }
