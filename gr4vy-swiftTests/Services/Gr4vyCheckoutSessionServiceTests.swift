@@ -484,7 +484,8 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         mockHTTPClient.data = versioningResponse
         
         // When
-        let result = try await service.callVersioning(checkoutSessionId: checkoutSessionId)
+        let response = try await service.callVersioning(checkoutSessionId: checkoutSessionId)
+        let result = try XCTUnwrap(response)
         
         // Then
         XCTAssertEqual(result.directoryServerId, "dir_server_001")
@@ -609,11 +610,13 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         service.callVersioning(checkoutSessionId: checkoutSessionId) { result in
             // Then
             switch result {
-            case .success(let response):
+            case .success(let response?):
                 XCTAssertEqual(response.directoryServerId, "dir_server_002")
                 XCTAssertEqual(response.messageVersion, "2.1.0")
                 XCTAssertEqual(response.apiKey, "test_api_key_67890")
                 expectation.fulfill()
+            case .success(.none):
+                XCTFail("Expected a versioning response, got nil")
             case .failure(let error):
                 XCTFail("Expected success, got error: \(error)")
             }
@@ -657,6 +660,123 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         }
         
         wait(for: [expectation], timeout: 5.0)
+    }
+
+    // MARK: - Versioning Tests (Preferred Scheme & 204 No Content)
+
+    func testCallVersioningAppendsPreferredScheme() async throws {
+        // Given
+        let service = Gr4vyCheckoutSessionService(
+            httpClient: mockHTTPClient,
+            configuration: testConfiguration
+        )
+        let checkoutSessionId = "checkout_session_preferred_scheme"
+        mockHTTPClient.data = Data("""
+        {
+            "directory_server_id": "dir_server_cb",
+            "message_version": "2.2.0",
+            "api_key": "test_api_key_cb"
+        }
+        """.utf8)
+
+        // When
+        let result = try await service.callVersioning(checkoutSessionId: checkoutSessionId, preferredScheme: "cartes-bancaires")
+
+        // Then
+        XCTAssertEqual(result?.directoryServerId, "dir_server_cb")
+        let expectedURL = try Gr4vyUtility.versioningURL(from: testSetup, checkoutSessionId: checkoutSessionId, preferredScheme: "cartes-bancaires")
+        XCTAssertEqual(mockHTTPClient.lastURL, expectedURL)
+        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferred_scheme=cartes-bancaires")
+    }
+
+    func testCallVersioningOmitsQueryWhenPreferredSchemeNilOrEmpty() async throws {
+        // Given
+        let service = Gr4vyCheckoutSessionService(
+            httpClient: mockHTTPClient,
+            configuration: testConfiguration
+        )
+        mockHTTPClient.data = Data("""
+        {
+            "directory_server_id": "dir_server_001",
+            "message_version": "2.2.0",
+            "api_key": "test_api_key_12345"
+        }
+        """.utf8)
+        let omittedValues: [String?] = [nil, ""]
+
+        for preferredScheme in omittedValues {
+            // When
+            _ = try await service.callVersioning(checkoutSessionId: "checkout_session_no_scheme", preferredScheme: preferredScheme)
+
+            // Then
+            let lastURL = try XCTUnwrap(mockHTTPClient.lastURL)
+            XCTAssertNil(lastURL.query, "Expected no query for preferredScheme \(String(describing: preferredScheme))")
+        }
+    }
+
+    func testCallVersioningEmptyBodyReturnsNil() async throws {
+        // Given - an empty body is what a 204 No Content surfaces as through the HTTP client
+        let service = Gr4vyCheckoutSessionService(
+            httpClient: mockHTTPClient,
+            configuration: testConfiguration
+        )
+        mockHTTPClient.data = Data()
+
+        // When - must not throw
+        let result = try await service.callVersioning(checkoutSessionId: "checkout_session_empty_body")
+
+        // Then
+        XCTAssertNil(result)
+        XCTAssertEqual(mockHTTPClient.lastMethod, "GET")
+    }
+
+    func testCallVersioningReturnsNilOnHTTP204() async throws {
+        // Given - drive the real Gr4vyHTTPClient with a 204 + empty body
+        let session = MockURLSession()
+        session.mockData = Data()
+        session.mockResponse = try XCTUnwrap(
+            HTTPURLResponse(
+                url: try XCTUnwrap(URL(string: "https://api.sandbox.test-checkout-id.gr4vy.app")),
+                statusCode: 204,
+                httpVersion: nil,
+                headerFields: nil
+            )
+        )
+        let service = Gr4vyCheckoutSessionService(setup: testSetup, session: session)
+
+        // When - must not throw
+        let result = try await service.callVersioning(checkoutSessionId: "checkout_session_204", preferredScheme: "cartes-bancaires")
+
+        // Then
+        XCTAssertNil(result)
+        XCTAssertEqual(session.lastRequest?.httpMethod, "GET")
+        XCTAssertEqual(session.lastRequest?.url?.path, "/checkout/sessions/checkout_session_204/three-d-secure-version")
+        XCTAssertEqual(session.lastRequest?.url?.query, "preferred_scheme=cartes-bancaires")
+    }
+
+    func testCallVersioningCompletionHandlerReturnsNilOnEmptyBody() throws {
+        // Given
+        let service = Gr4vyCheckoutSessionService(
+            httpClient: mockHTTPClient,
+            configuration: testConfiguration
+        )
+        mockHTTPClient.data = Data()
+        let expectation = XCTestExpectation(description: "Versioning completion with empty body")
+
+        // When
+        service.callVersioning(checkoutSessionId: "checkout_session_empty_body", preferredScheme: "cartes-bancaires") { result in
+            // Then
+            switch result {
+            case .success(let response):
+                XCTAssertNil(response)
+            case .failure(let error):
+                XCTFail("Expected success(nil), got error: \(error)")
+            }
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 5.0)
+        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferred_scheme=cartes-bancaires")
     }
     
     // MARK: - Create Transaction Tests (Async)
