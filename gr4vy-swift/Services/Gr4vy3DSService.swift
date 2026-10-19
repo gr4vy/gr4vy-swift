@@ -162,6 +162,7 @@ final class Gr4vy3DSService {
     ///   - sdkMaxTimeoutMinutes: Maximum timeout for 3DS challenge in minutes
     ///   - authenticate: If we should authenticate the user
     ///   - uiCustomization: Optional UI customization for 3DS challenge
+    ///   - preferredScheme: Optional card scheme to run 3DS on (sent as `preferred_scheme` to versioning). Only used when `authenticate` is true.
     /// - Returns: Gr4vyTokenizeResult containing authentication status and transaction details
     /// - Throws: Gr4vyError if authentication fails or other errors occur
     func tokenize(
@@ -170,7 +171,8 @@ final class Gr4vy3DSService {
         viewController: UIViewController,
         sdkMaxTimeoutMinutes: Int,
         authenticate: Bool,
-        uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil
+        uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil,
+        preferredScheme: String? = nil
     ) async throws -> Gr4vyTokenizeResult {
         try await performTokenization(
             checkoutSessionId: checkoutSessionId,
@@ -178,7 +180,8 @@ final class Gr4vy3DSService {
             viewController: viewController,
             sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes,
             authenticate: authenticate,
-            uiCustomization: uiCustomization
+            uiCustomization: uiCustomization,
+            preferredScheme: preferredScheme
         )
     }
 
@@ -190,6 +193,7 @@ final class Gr4vy3DSService {
     ///   - sdkMaxTimeoutMinutes: Maximum timeout for 3DS challenge in minutes
     ///   - authenticate: If we should authenticate the user
     ///   - uiCustomization: Optional UI customization for 3DS challenge
+    ///   - preferredScheme: Optional card scheme to run 3DS on (sent as `preferred_scheme` to versioning). Only used when `authenticate` is true.
     ///   - completion: Result callback with Gr4vyTokenizeResult on success or Error on failure
     func tokenize(
         checkoutSessionId: String,
@@ -198,6 +202,7 @@ final class Gr4vy3DSService {
         sdkMaxTimeoutMinutes: Int,
         authenticate: Bool,
         uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil,
+        preferredScheme: String? = nil,
         completion: @escaping (Result<Gr4vyTokenizeResult, Error>) -> Void
     ) {
         Task {
@@ -208,7 +213,8 @@ final class Gr4vy3DSService {
                     viewController: viewController,
                     sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes,
                     authenticate: authenticate,
-                    uiCustomization: uiCustomization
+                    uiCustomization: uiCustomization,
+                    preferredScheme: preferredScheme
                 )
                 completion(.success(result))
             } catch {
@@ -385,6 +391,7 @@ final class Gr4vy3DSService {
     ///   - sdkMaxTimeoutMinutes: Maximum timeout for 3DS challenge in minutes
     ///   - authenticate: If we should authenticate the user
     ///   - uiCustomization: Optional UI customization for 3DS challenge
+    ///   - preferredScheme: Optional card scheme to run 3DS on (sent as `preferred_scheme` to versioning). Only used when `authenticate` is true.
     /// - Returns: Gr4vyTokenizeResult containing authentication status and transaction details
     /// - Throws: Gr4vyError if any step fails
     private func performTokenization(
@@ -393,7 +400,8 @@ final class Gr4vy3DSService {
         viewController: UIViewController,
         sdkMaxTimeoutMinutes: Int,
         authenticate: Bool,
-        uiCustomization: Gr4vyThreeDSUiCustomizationMap?
+        uiCustomization: Gr4vyThreeDSUiCustomizationMap?,
+        preferredScheme: String?
     ) async throws -> Gr4vyTokenizeResult {
         // Step 1: Tokenize card data
         try await checkoutSessionService.tokenize(checkoutSessionId: checkoutSessionId, cardData: cardData)
@@ -403,26 +411,20 @@ final class Gr4vy3DSService {
         }
         
         // Step 2: Get 3DS versioning information
-        var versioningResponse: Gr4vyVersioningResponse?
-        
+        let versioningResponse: Gr4vyVersioningResponse?
         do {
-            versioningResponse = try await checkoutSessionService.callVersioning(checkoutSessionId: checkoutSessionId)
+            versioningResponse = try await checkoutSessionService.callVersioning(
+                checkoutSessionId: checkoutSessionId,
+                preferredScheme: preferredScheme
+            )
         } catch {
             Gr4vyLogger.error("Versioning failed: \(error.localizedDescription)")
-            versioningResponse = nil
+            return unattemptedAuthenticationResult()
         }
 
-        guard let versioningResponse = versioningResponse else {
-            return Gr4vyTokenizeResult(
-                    tokenized: true,
-                    authentication: Gr4vyAuthentication(
-                        attempted: false,
-                        type: nil,
-                        transactionStatus: nil,
-                        hasCancelled: false,
-                        cardholderInfo: nil
-                    )
-                )
+        guard let versioningResponse else {
+            Gr4vyLogger.debug("3DS versioning returned no content (204): card scheme not set up for 3DS, skipping authentication")
+            return unattemptedAuthenticationResult()
         }
         
         // Step 3: Initialize 3DS SDK and handle authentication flow
@@ -432,6 +434,20 @@ final class Gr4vy3DSService {
             sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes,
             uiCustomization: uiCustomization,
             viewController: viewController
+        )
+    }
+
+    /// Tokenized result for when 3DS was requested but couldn't be attempted.
+    private func unattemptedAuthenticationResult() -> Gr4vyTokenizeResult {
+        Gr4vyTokenizeResult(
+            tokenized: true,
+            authentication: Gr4vyAuthentication(
+                attempted: false,
+                type: nil,
+                transactionStatus: nil,
+                hasCancelled: false,
+                cardholderInfo: nil
+            )
         )
     }
 

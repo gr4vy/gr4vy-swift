@@ -205,6 +205,110 @@ class Gr4vyUtilityTests: XCTestCase {
         }
     }
 
+    // MARK: - Versioning URL Tests
+    func testVersioningURLWithoutPreferredScheme() throws {
+        let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123")
+
+        XCTAssertEqual(url.absoluteString, "https://api.sandbox.test-id.gr4vy.app/checkout/sessions/session-123/three-d-secure-version")
+        XCTAssertNil(url.query)
+    }
+
+    func testVersioningURLWithNilPreferredScheme() throws {
+        let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: nil)
+
+        XCTAssertEqual(url.absoluteString, "https://api.sandbox.test-id.gr4vy.app/checkout/sessions/session-123/three-d-secure-version")
+        XCTAssertNil(url.query)
+    }
+
+    func testVersioningURLWithEmptyPreferredScheme() throws {
+        let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: "")
+
+        XCTAssertEqual(url.absoluteString, "https://api.sandbox.test-id.gr4vy.app/checkout/sessions/session-123/three-d-secure-version")
+        XCTAssertNil(url.query)
+    }
+
+    func testVersioningURLWithPreferredScheme() throws {
+        let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: "cartes-bancaires")
+
+        XCTAssertTrue(url.absoluteString.hasSuffix("/three-d-secure-version?preferred_scheme=cartes-bancaires"))
+        XCTAssertEqual(url.path, "/checkout/sessions/session-123/three-d-secure-version")
+        XCTAssertEqual(url.query, "preferred_scheme=cartes-bancaires")
+    }
+
+    func testVersioningURLEncodesPreferredScheme() throws {
+        let scheme = "cartes bancaires&x=1#y"
+        let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: scheme)
+
+        let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        let queryItems = try XCTUnwrap(components.queryItems)
+        XCTAssertEqual(queryItems.count, 1, "`&` must not split the value into a second query item")
+        let item = try XCTUnwrap(queryItems.first { $0.name == "preferred_scheme" })
+        XCTAssertEqual(item.value, scheme)
+        XCTAssertNil(url.fragment, "`#` must be encoded, not start a fragment")
+        XCTAssertFalse(url.absoluteString.contains(" "))
+    }
+
+    func testVersioningURLEncodesNonASCIIPreferredScheme() throws {
+        let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: "é")
+
+        XCTAssertEqual(url.query, "preferred_scheme=%C3%A9")
+    }
+
+    func testVersioningURLSendsWhitespaceOnlyPreferredScheme() throws {
+        // Only nil and "" are omitted; no trimming, so whitespace is sent (encoded)
+        let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: "  ")
+
+        XCTAssertEqual(url.query, "preferred_scheme=%20%20")
+    }
+
+    func testVersioningURLLeavesPlusSignUnencoded() throws {
+        // Documents a known Foundation quirk: URLComponents.queryItems doesn't encode "+".
+        // Card scheme identifiers never contain "+"; Android encodes it as %2B.
+        let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: "a+b")
+
+        XCTAssertEqual(url.query, "preferred_scheme=a+b")
+    }
+
+    func testVersioningURLPreferredSchemeOnProduction() throws {
+        let url = try Gr4vyUtility.versioningURL(from: productionSetup, checkoutSessionId: "session-123", preferredScheme: "cartes-bancaires")
+
+        XCTAssertEqual(url.host, "api.prod-id.gr4vy.app")
+        XCTAssertEqual(url.path, "/checkout/sessions/session-123/three-d-secure-version")
+        XCTAssertEqual(url.query, "preferred_scheme=cartes-bancaires")
+    }
+
+    func testVersioningURLRoundTripsReservedPercentAndNonASCIIPreferredScheme() throws {
+        let schemes = [
+            "a&preferred_scheme=visa",
+            "a=b",
+            "100%",
+            "%41",
+            "a/b?c",
+            "银联",
+            "Carte Bancaire & Co=1#x%2F/é",
+        ]
+        for scheme in schemes {
+            let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: scheme)
+
+            let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
+            let query = try XCTUnwrap(components.percentEncodedQuery)
+            XCTAssertEqual(components.queryItems?.count, 1, "Expected a single query item for '\(scheme)': \(query)")
+            XCTAssertEqual(components.queryItems?.first?.name, "preferred_scheme")
+            XCTAssertEqual(components.queryItems?.first?.value, scheme)
+            XCTAssertNil(url.fragment, "Encoded value must not start a fragment for '\(scheme)'")
+            XCTAssertTrue(query.unicodeScalars.allSatisfy { $0.value > 0x20 && $0.value < 0x7F }, "Query must be printable ASCII for '\(scheme)': \(query)")
+        }
+    }
+
+    func testVersioningURLSendsPreferredSchemeVerbatimWithoutValidation() throws {
+        // No allowlist, trimming or case folding on the client: Core API falls back for invalid values
+        for scheme in ["VISA", "Cartes-Bancaires", "not-a-real-scheme", "x"] {
+            let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: scheme)
+
+            XCTAssertEqual(url.query, "preferred_scheme=\(scheme)")
+        }
+    }
+
     // MARK: - Buyers Payment Methods URL Tests
     func testBuyersPaymentMethodsURLSandbox() throws {
         let url = try Gr4vyUtility.buyersPaymentMethodsURL(from: sandboxSetup)

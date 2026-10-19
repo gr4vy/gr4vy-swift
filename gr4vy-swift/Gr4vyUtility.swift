@@ -77,7 +77,7 @@ public struct Gr4vyUtility {
         return url
     }
     
-    public static func versioningURL(from setup: Gr4vySetup, checkoutSessionId: String) throws -> URL {
+    public static func versioningURL(from setup: Gr4vySetup, checkoutSessionId: String, preferredScheme: String? = nil) throws -> URL {
         let validatedGr4vyId = try validateGr4vyId(setup.gr4vyId)
 
         guard !checkoutSessionId.isEmpty else {
@@ -95,6 +95,9 @@ public struct Gr4vyUtility {
         components.scheme = "https"
         components.host = "api.\(subdomainPrefix)\(validatedGr4vyId).gr4vy.app"
         components.path = "/checkout/sessions/\(encodedSessionId)/three-d-secure-version"
+        if let preferredScheme, !preferredScheme.isEmpty {
+            components.queryItems = [URLQueryItem(name: "preferred_scheme", value: preferredScheme)]
+        }
 
         guard let url = components.url else {
             throw Gr4vyError.badURL("Failed to construct perform versioning URL")

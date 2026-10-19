@@ -79,14 +79,18 @@ extension Gr4vyCheckoutSessionService {
 
 // MARK: - Versioning Methods
 extension Gr4vyCheckoutSessionService {
-    func callVersioning(checkoutSessionId: String) async throws -> Gr4vyVersioningResponse {
-        try await performVersioning(checkoutSessionId: checkoutSessionId)
+    func callVersioning(checkoutSessionId: String, preferredScheme: String? = nil) async throws -> Gr4vyVersioningResponse? {
+        try await performVersioning(checkoutSessionId: checkoutSessionId, preferredScheme: preferredScheme)
     }
     
-    func callVersioning(checkoutSessionId: String, completion: @escaping (Result<Gr4vyVersioningResponse, Error>) -> Void) {
+    func callVersioning(
+        checkoutSessionId: String,
+        preferredScheme: String? = nil,
+        completion: @escaping (Result<Gr4vyVersioningResponse?, Error>) -> Void
+    ) {
         Task {
             do {
-                let result = try await performVersioning(checkoutSessionId: checkoutSessionId)
+                let result = try await performVersioning(checkoutSessionId: checkoutSessionId, preferredScheme: preferredScheme)
                 completion(.success(result))
             } catch {
                 completion(.failure(error))
@@ -94,8 +98,12 @@ extension Gr4vyCheckoutSessionService {
         }
     }
     
-    private func performVersioning(checkoutSessionId: String) async throws -> Gr4vyVersioningResponse {
-        let url = try Gr4vyUtility.versioningURL(from: configuration.setup, checkoutSessionId: checkoutSessionId)
+    private func performVersioning(checkoutSessionId: String, preferredScheme: String?) async throws -> Gr4vyVersioningResponse? {
+        let url = try Gr4vyUtility.versioningURL(
+            from: configuration.setup,
+            checkoutSessionId: checkoutSessionId,
+            preferredScheme: preferredScheme
+        )
 
         let data = try await httpClient.perform(
             to: url,
@@ -105,6 +113,11 @@ extension Gr4vyCheckoutSessionService {
             timeout: nil
         )
         
+        // 204 No Content: the card's scheme isn't set up for 3DS. The HTTP client only
+        // surfaces the body, and 204 is the only success this endpoint returns without one.
+        guard !data.isEmpty else {
+            return nil
+        }
         return try JSONDecoder().decode(Gr4vyVersioningResponse.self, from: data)
     }
 }

@@ -636,4 +636,370 @@ final class Gr4vyTests: XCTestCase {
         // After autoreleasepool, the instance should be deallocated
         XCTAssertNil(weakGr4vy)
     }
+
+    // MARK: - Preferred Scheme Tests
+
+    /// Session answering every request with 204 + empty body: PUT /fields succeeds, versioning gets 204 No Content.
+    private func makeNoContentSession() throws -> MockURLSession {
+        let session = MockURLSession()
+        session.mockData = Data()
+        session.mockResponse = try XCTUnwrap(
+            HTTPURLResponse(
+                url: try XCTUnwrap(URL(string: "https://api.sandbox.test.gr4vy.app")),
+                statusCode: 204,
+                httpVersion: nil,
+                headerFields: nil
+            )
+        )
+        return session
+    }
+
+    private func makePreferredSchemeCardData() -> Gr4vyCardData {
+        Gr4vyCardData(paymentMethod: .card(.init(
+            number: "4111111111111111",
+            expirationDate: "12/25",
+            securityCode: "123"
+        )))
+    }
+
+    /// Forwarding + contract test only: the public overload sends `preferred_scheme` and a versioning 204 gives
+    /// `attempted == false` without an error. It can't tell the explicit 204 branch from the catch-all; the
+    /// regression guard is `Gr4vyCheckoutSessionServiceTests.testCallVersioningReturnsNilOnHTTP204`.
+    func testTokenizeAsyncWithViewControllerForwardsPreferredScheme() async throws {
+        // Given
+        let session = try makeNoContentSession()
+        let gr4vy = try Gr4vy(
+            gr4vyId: "test",
+            token: "token",
+            merchantId: "preferred_scheme_merchant",
+            server: .sandbox,
+            session: session
+        )
+
+        // When
+        let result = try await gr4vy.tokenize(
+            checkoutSessionId: "session_preferred_scheme_async",
+            cardData: makePreferredSchemeCardData(),
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: "cartes-bancaires"
+        )
+
+        // Then
+        XCTAssertTrue(result.tokenized)
+        XCTAssertFalse(result.authentication?.attempted ?? true)
+        XCTAssertEqual(session.lastRequest?.httpMethod, "GET")
+        XCTAssertEqual(session.lastRequest?.url?.query, "preferred_scheme=cartes-bancaires")
+    }
+
+    /// Forwarding + contract test only: the public overload sends `preferred_scheme` and a versioning 204 gives
+    /// `attempted == false` without an error. It can't tell the explicit 204 branch from the catch-all; the
+    /// regression guard is `Gr4vyCheckoutSessionServiceTests.testCallVersioningReturnsNilOnHTTP204`.
+    func testTokenizeCompletionWithViewControllerForwardsPreferredScheme() throws {
+        // Given
+        let session = try makeNoContentSession()
+        let gr4vy = try Gr4vy(
+            gr4vyId: "test",
+            token: "token",
+            merchantId: "preferred_scheme_merchant",
+            server: .sandbox,
+            session: session
+        )
+        let expectation = XCTestExpectation(description: "Tokenize with preferredScheme completion called")
+
+        // When
+        gr4vy.tokenize(
+            checkoutSessionId: "session_preferred_scheme_completion",
+            cardData: makePreferredSchemeCardData(),
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: "cartes-bancaires"
+        ) { result in
+            // Then
+            switch result {
+            case .success(let tokenizeResult):
+                XCTAssertTrue(tokenizeResult.tokenized)
+                XCTAssertFalse(tokenizeResult.authentication?.attempted ?? true)
+            case .failure(let error):
+                XCTFail("Tokenize should succeed with a 204 versioning response: \(error)")
+            }
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 5.0)
+        XCTAssertEqual(session.lastRequest?.httpMethod, "GET")
+        XCTAssertEqual(session.lastRequest?.url?.query, "preferred_scheme=cartes-bancaires")
+    }
+
+    /// Records every request. The versioning GET is answered with `versioningStatus` (or fails with
+    /// `versioningError`); every other request gets 204. All bodies are empty.
+    private final class RecordingURLSession: URLSessionProtocol {
+        var versioningStatus = 204
+        var versioningError: Error?
+
+        private let lock = NSLock()
+        private var recorded: [URLRequest] = []
+
+        var requests: [URLRequest] { lock.withLock { recorded } }
+        var versioningURLs: [URL] {
+            requests.compactMap(\.url).filter { $0.path.hasSuffix("/three-d-secure-version") }
+        }
+
+        func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+            lock.withLock { recorded.append(request) }
+            let url = try XCTUnwrap(request.url)
+            let isVersioning = url.path.hasSuffix("/three-d-secure-version")
+            if isVersioning, let versioningError {
+                throw versioningError
+            }
+            let response = try XCTUnwrap(
+                HTTPURLResponse(url: url, statusCode: isVersioning ? versioningStatus : 204, httpVersion: nil, headerFields: nil)
+            )
+            return (Data(), response)
+        }
+    }
+
+    private func makePreferredSchemeGr4vy(session: URLSessionProtocol) throws -> Gr4vy {
+        try Gr4vy(
+            gr4vyId: "test",
+            token: "token",
+            merchantId: "preferred_scheme_merchant",
+            server: .sandbox,
+            session: session
+        )
+    }
+
+    /// The exact result for "3DS requested but not attempted".
+    private func assertUnattempted(_ result: Gr4vyTokenizeResult, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(result.tokenized, file: file, line: line)
+        guard let authentication = result.authentication else {
+            XCTFail("Expected an unattempted authentication, got nil", file: file, line: line)
+            return
+        }
+        XCTAssertFalse(authentication.attempted, file: file, line: line)
+        XCTAssertNil(authentication.type, file: file, line: line)
+        XCTAssertNil(authentication.transactionStatus, file: file, line: line)
+        XCTAssertFalse(authentication.hasCancelled, file: file, line: line)
+        XCTAssertFalse(authentication.hasTimedOut, file: file, line: line)
+        XCTAssertNil(authentication.cardholderInfo, file: file, line: line)
+    }
+
+    func testTokenizeAsyncWithEmptyPreferredSchemeSendsNoQuery() async throws {
+        let session = RecordingURLSession()
+
+        let result = try await makePreferredSchemeGr4vy(session: session).tokenize(
+            checkoutSessionId: "session_preferred_scheme",
+            cardData: makePreferredSchemeCardData(),
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: ""
+        )
+
+        assertUnattempted(result)
+        XCTAssertEqual(session.versioningURLs.count, 1)
+        XCTAssertNil(session.versioningURLs.first?.query)
+    }
+
+    func testTokenizeAsyncDeliversReservedAndNonASCIIPreferredSchemeEncoded() async throws {
+        let session = RecordingURLSession()
+        let scheme = "Carte Bancaire & Co=1#x%2F/é"
+
+        let result = try await makePreferredSchemeGr4vy(session: session).tokenize(
+            checkoutSessionId: "session_preferred_scheme",
+            cardData: makePreferredSchemeCardData(),
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: scheme
+        )
+
+        assertUnattempted(result)
+        let url = try XCTUnwrap(session.versioningURLs.first)
+        let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        let query = try XCTUnwrap(components.percentEncodedQuery)
+        XCTAssertEqual(components.queryItems?.count, 1)
+        XCTAssertEqual(components.queryItems?.first?.value, scheme)
+        XCTAssertNil(url.fragment)
+        XCTAssertTrue(query.unicodeScalars.allSatisfy { $0.value > 0x20 && $0.value < 0x7F }, "Query must be printable ASCII: \(query)")
+    }
+
+    func testTokenizeAsyncSendsUnknownPreferredSchemeVerbatim() async throws {
+        let session = RecordingURLSession()
+
+        let result = try await makePreferredSchemeGr4vy(session: session).tokenize(
+            checkoutSessionId: "session_preferred_scheme",
+            cardData: makePreferredSchemeCardData(),
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: "Not-A-Real-Scheme"
+        )
+
+        assertUnattempted(result)
+        XCTAssertEqual(session.versioningURLs.first?.query, "preferred_scheme=Not-A-Real-Scheme")
+    }
+
+    func testTokenizeDoesNotLeakPreferredSchemeBetweenCalls() async throws {
+        let session = RecordingURLSession()
+        let gr4vy = try makePreferredSchemeGr4vy(session: session)
+        let viewController = UIViewController()
+
+        _ = try await gr4vy.tokenize(
+            checkoutSessionId: "session_preferred_scheme",
+            cardData: makePreferredSchemeCardData(),
+            viewController: viewController,
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: "cartes-bancaires"
+        )
+        _ = try await gr4vy.tokenize(
+            checkoutSessionId: "session_preferred_scheme",
+            cardData: makePreferredSchemeCardData(),
+            viewController: viewController,
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true
+        )
+        _ = try await gr4vy.tokenize(
+            checkoutSessionId: "session_preferred_scheme",
+            cardData: makePreferredSchemeCardData(),
+            viewController: viewController,
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: "visa"
+        )
+
+        XCTAssertEqual(session.versioningURLs.map(\.query), ["preferred_scheme=cartes-bancaires", nil, "preferred_scheme=visa"])
+    }
+
+    func testTokenizeSendsPreferredSchemeOnlyOnVersioningRequest() async throws {
+        let session = RecordingURLSession()
+
+        _ = try await makePreferredSchemeGr4vy(session: session).tokenize(
+            checkoutSessionId: "session_preferred_scheme",
+            cardData: makePreferredSchemeCardData(),
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: "cartes-bancaires"
+        )
+
+        let fields = try XCTUnwrap(session.requests.first { $0.url?.path.hasSuffix("/fields") == true })
+        XCTAssertEqual(fields.httpMethod, "PUT")
+        XCTAssertNil(fields.url?.query)
+        let body = try XCTUnwrap(fields.httpBody.flatMap { String(bytes: $0, encoding: .utf8) })
+        XCTAssertFalse(body.contains("preferred_scheme"))
+        XCTAssertFalse(body.contains("preferredScheme"))
+        XCTAssertFalse(body.contains("cartes-bancaires"))
+    }
+
+    func testTokenizeAsyncVersioningHTTP500ReturnsUnattempted() async throws {
+        let session = RecordingURLSession()
+        session.versioningStatus = 500
+
+        let result = try await makePreferredSchemeGr4vy(session: session).tokenize(
+            checkoutSessionId: "session_preferred_scheme",
+            cardData: makePreferredSchemeCardData(),
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: "cartes-bancaires"
+        )
+
+        assertUnattempted(result)
+    }
+
+    func testTokenizeAsyncVersioningNetworkErrorReturnsUnattempted() async throws {
+        let session = RecordingURLSession()
+        session.versioningError = URLError(.notConnectedToInternet)
+
+        let result = try await makePreferredSchemeGr4vy(session: session).tokenize(
+            checkoutSessionId: "session_preferred_scheme",
+            cardData: makePreferredSchemeCardData(),
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: "cartes-bancaires"
+        )
+
+        assertUnattempted(result)
+    }
+
+    func testTokenizeAsyncVersioning200WithEmptyBodyReturnsUnattempted() async throws {
+        let session = RecordingURLSession()
+        session.versioningStatus = 200
+
+        let result = try await makePreferredSchemeGr4vy(session: session).tokenize(
+            checkoutSessionId: "session_preferred_scheme",
+            cardData: makePreferredSchemeCardData(),
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: "cartes-bancaires"
+        )
+
+        assertUnattempted(result)
+    }
+
+    func testTokenizeCompletionTrailingClosureWithoutPreferredSchemeSendsNoQuery() throws {
+        let session = RecordingURLSession()
+        let gr4vy = try makePreferredSchemeGr4vy(session: session)
+        let expectation = XCTestExpectation(description: "Tokenize without preferredScheme completion called")
+
+        // Existing trailing-closure call shape, without the new parameter
+        gr4vy.tokenize(
+            checkoutSessionId: "session_preferred_scheme",
+            cardData: makePreferredSchemeCardData(),
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true
+        ) { result in
+            switch result {
+            case .success(let tokenizeResult):
+                self.assertUnattempted(tokenizeResult)
+            case .failure(let error):
+                XCTFail("Tokenize should succeed with a 204 versioning response: \(error)")
+            }
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 5.0)
+        XCTAssertEqual(session.versioningURLs.count, 1)
+        XCTAssertNil(session.versioningURLs.first?.query)
+    }
+
+    /// The overloads without `viewController` resolve a presenter from the key window, which the unit-test host
+    /// doesn't have, so they're not invoked. This proves they accept `preferredScheme`; forwarding is checked in review.
+    func testTokenizeConvenienceOverloadsAcceptPreferredScheme() throws {
+        let session = RecordingURLSession()
+        let gr4vy = try makePreferredSchemeGr4vy(session: session)
+        let cardData = makePreferredSchemeCardData()
+
+        let asyncCall: () async throws -> Gr4vyTokenizeResult = {
+            try await gr4vy.tokenize(
+                checkoutSessionId: "session_preferred_scheme",
+                cardData: cardData,
+                sdkMaxTimeoutMinutes: 5,
+                authenticate: true,
+                uiCustomization: nil,
+                preferredScheme: "cartes-bancaires"
+            )
+        }
+        let completionCall: () -> Void = {
+            gr4vy.tokenize(
+                checkoutSessionId: "session_preferred_scheme",
+                cardData: cardData,
+                sdkMaxTimeoutMinutes: 5,
+                authenticate: true,
+                uiCustomization: nil,
+                preferredScheme: "cartes-bancaires"
+            ) { _ in }
+        }
+
+        _ = asyncCall
+        _ = completionCall
+        XCTAssertTrue(session.requests.isEmpty)
+    }
 }
