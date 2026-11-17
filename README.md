@@ -65,7 +65,7 @@ Add the following to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.2.0")
+    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.3.0")
 ]
 ```
 <!-- End SDK Installation [installation] -->
@@ -357,6 +357,7 @@ gr4vy.tokenize(
 - `sdkMaxTimeoutMinutes`: Maximum time for 3DS authentication in minutes (default: 5)
 - `authenticate`: This controls if we should attempt to authenticate the card data (default: false)
 - `uiCustomization`: (Optional) UI customization for the 3DS challenge screen
+- `preferredScheme`: (Optional) The Gr4vy scheme ID the cardholder chose on a co-badged card (for example `carte-bancaire`), sent as `preferredScheme`. 3DS runs on this scheme. If the card doesn't carry it, Gr4vy uses the card's primary scheme. If the scheme isn't set up for 3DS, or isn't a Gr4vy scheme ID, `authentication.attempted` is `false`. Only used when `authenticate` is `true`.
 
 **Returns:** `Gr4vyTokenizeResult` containing:
 - `tokenized`: Boolean indicating if tokenization was successful
