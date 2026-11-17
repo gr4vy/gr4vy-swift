@@ -28,7 +28,7 @@ w() { xcrun simctl spawn booted defaults write "$APP" "$@"; }
 w gr4vyId -string "$ID"
 w merchantId -string "${MERCHANT:-default}"
 w serverEnvironment -string sandbox
-w apiToken -string "$(gr4vy token -e 2h)"
+w apiToken -string "$(gr4vy token -e 30m)"
 w fields_checkout_session_id -string "$SESSION"
 w fields_payment_method_type -string card
 w fields_test_card -string custom
