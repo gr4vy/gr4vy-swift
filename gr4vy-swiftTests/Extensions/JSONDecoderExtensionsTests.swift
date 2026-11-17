@@ -40,14 +40,14 @@ class JSONDecoderExtensionsTests: XCTestCase {
     func testDecodeIfPresentWithValidJSON() throws {
         // Given
         let testModel = TestModel(id: "123", name: "Test", value: 42, isActive: true)
-        let validJSON = """
+        let validJSON = Data("""
         {
             "id": "123",
             "name": "Test",
             "value": 42,
             "isActive": true
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let result = decoder.decodeIfPresent(TestModel.self, from: validJSON)
@@ -59,7 +59,7 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithComplexModel() throws {
         // Given
-        let complexJSON = """
+        let complexJSON = Data("""
         {
             "id": "complex_123",
             "metadata": {
@@ -82,7 +82,7 @@ class JSONDecoderExtensionsTests: XCTestCase {
             ],
             "optionalField": "present"
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let result = decoder.decodeIfPresent(ComplexTestModel.self, from: complexJSON)
@@ -98,14 +98,14 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithOptionalFields() throws {
         // Given
-        let jsonWithNullOptional = """
+        let jsonWithNullOptional = Data("""
         {
             "id": "optional_test",
             "metadata": {},
             "items": [],
             "optionalField": null
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let result = decoder.decodeIfPresent(ComplexTestModel.self, from: jsonWithNullOptional)
@@ -122,7 +122,7 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithInvalidJSON() throws {
         // Given
-        let invalidJSON = "{ invalid json }".data(using: .utf8)!
+        let invalidJSON = Data("{ invalid json }".utf8)
 
         // When
         let result = decoder.decodeIfPresent(TestModel.self, from: invalidJSON)
@@ -133,12 +133,12 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithMissingRequiredFields() throws {
         // Given
-        let incompleteJSON = """
+        let incompleteJSON = Data("""
         {
             "id": "123",
             "name": "Test"
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let result = decoder.decodeIfPresent(TestModel.self, from: incompleteJSON)
@@ -149,14 +149,14 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithWrongDataTypes() throws {
         // Given
-        let wrongTypesJSON = """
+        let wrongTypesJSON = Data("""
         {
             "id": "123",
             "name": "Test",
             "value": "not_a_number",
             "isActive": true
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let result = decoder.decodeIfPresent(TestModel.self, from: wrongTypesJSON)
@@ -180,7 +180,7 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithString() throws {
         // Given
-        let stringJSON = "\"Hello World\"".data(using: .utf8)!
+        let stringJSON = Data("\"Hello World\"".utf8)
 
         // When
         let result = decoder.decodeIfPresent(String.self, from: stringJSON)
@@ -192,7 +192,7 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithInt() throws {
         // Given
-        let intJSON = "42".data(using: .utf8)!
+        let intJSON = Data("42".utf8)
 
         // When
         let result = decoder.decodeIfPresent(Int.self, from: intJSON)
@@ -204,31 +204,31 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithDouble() throws {
         // Given
-        let doubleJSON = "3.14159".data(using: .utf8)!
+        let doubleJSON = Data("3.14159".utf8)
 
         // When
         let result = decoder.decodeIfPresent(Double.self, from: doubleJSON)
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertEqual(result!, 3.141_59, accuracy: 0.000_01)
+        XCTAssertEqual(try XCTUnwrap(result), 3.14159, accuracy: 0.00001)
     }
 
     func testDecodeIfPresentWithBool() throws {
         // Given
-        let boolJSON = "true".data(using: .utf8)!
+        let boolJSON = Data("true".utf8)
 
         // When
         let result = decoder.decodeIfPresent(Bool.self, from: boolJSON)
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertTrue(result!)
+        XCTAssertTrue(try XCTUnwrap(result))
     }
 
     func testDecodeIfPresentWithArray() throws {
         // Given
-        let arrayJSON = "[1, 2, 3, 4, 5]".data(using: .utf8)!
+        let arrayJSON = Data("[1, 2, 3, 4, 5]".utf8)
 
         // When
         let result = decoder.decodeIfPresent([Int].self, from: arrayJSON)
@@ -240,13 +240,13 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithDictionary() throws {
         // Given
-        let dictJSON = """
+        let dictJSON = Data("""
         {
             "key1": "value1",
             "key2": "value2",
             "key3": "value3"
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let result = decoder.decodeIfPresent([String: String].self, from: dictJSON)
@@ -262,14 +262,14 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithUnicodeCharacters() throws {
         // Given
-        let unicodeJSON = """
+        let unicodeJSON = Data("""
         {
             "id": "unicode_test",
             "name": "测试 🎯 émojis",
             "value": 100,
             "isActive": true
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let result = decoder.decodeIfPresent(TestModel.self, from: unicodeJSON)
@@ -281,14 +281,14 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithLargeNumbers() throws {
         // Given
-        let largeNumberJSON = """
+        let largeNumberJSON = Data("""
         {
             "id": "large_test",
             "name": "Large Number Test",
             "value": 2147483647,
             "isActive": false
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let result = decoder.decodeIfPresent(TestModel.self, from: largeNumberJSON)
@@ -300,7 +300,7 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithMinimalJSON() throws {
         // Given
-        let minimalJSON = "{}".data(using: .utf8)!
+        let minimalJSON = Data("{}".utf8)
 
         // When
         let result = decoder.decodeIfPresent([String: String].self, from: minimalJSON)
@@ -312,21 +312,21 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithNullValue() throws {
         // Given
-        let nullJSON = "null".data(using: .utf8)!
+        let nullJSON = Data("null".utf8)
 
         // When
         let result = decoder.decodeIfPresent(String?.self, from: nullJSON)
 
         // Then
         XCTAssertNotNil(result)
-        XCTAssertNil(result!)
+        XCTAssertNil(try XCTUnwrap(result))
     }
 
     // MARK: - Real-world Gr4vy Model Tests
 
     func testDecodeIfPresentWithGr4vyCardDetails() throws {
         // Given
-        let cardDetailsJSON = """
+        let cardDetailsJSON = Data("""
         {
             "type": "card_details",
             "id": "cd_test_123",
@@ -336,7 +336,7 @@ class JSONDecoderExtensionsTests: XCTestCase {
             "country": "US",
             "required_fields": null
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let result = decoder.decodeIfPresent(Gr4vyCardDetailsResponse.self, from: cardDetailsJSON)
@@ -351,12 +351,12 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentWithValidGr4vyCardDetails() throws {
         // Given - This is actually valid JSON (has required id field)
-        let validCardDetailsJSON = """
+        let validCardDetailsJSON = Data("""
         {
             "type": "card_details",
             "id": "cd_test_123"
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let result = decoder.decodeIfPresent(Gr4vyCardDetailsResponse.self, from: validCardDetailsJSON)
@@ -371,14 +371,14 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentVsStandardDecodeSuccess() throws {
         // Given
-        let validJSON = """
+        let validJSON = Data("""
         {
             "id": "comparison_test",
             "name": "Comparison Test",
             "value": 123,
             "isActive": true
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let standardResult = try? decoder.decode(TestModel.self, from: validJSON)
@@ -392,7 +392,7 @@ class JSONDecoderExtensionsTests: XCTestCase {
 
     func testDecodeIfPresentVsStandardDecodeFailure() throws {
         // Given
-        let invalidJSON = "{ invalid json }".data(using: .utf8)!
+        let invalidJSON = Data("{ invalid json }".utf8)
 
         // When
         var standardThrew = false
@@ -420,11 +420,11 @@ class JSONDecoderExtensionsTests: XCTestCase {
         let customDecoder = JSONDecoder()
         customDecoder.dateDecodingStrategy = .iso8601
 
-        let dateJSON = """
+        let dateJSON = Data("""
         {
             "date": "2023-12-25T10:30:00Z"
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let result = customDecoder.decodeIfPresent(DateModel.self, from: dateJSON)
@@ -444,12 +444,12 @@ class JSONDecoderExtensionsTests: XCTestCase {
         let customDecoder = JSONDecoder()
         customDecoder.keyDecodingStrategy = .convertFromSnakeCase
 
-        let snakeCaseJSON = """
+        let snakeCaseJSON = Data("""
         {
             "first_name": "John",
             "last_name": "Doe"
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         // When
         let result = customDecoder.decodeIfPresent(SnakeCaseModel.self, from: snakeCaseJSON)

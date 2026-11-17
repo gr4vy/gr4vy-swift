@@ -255,7 +255,7 @@ final class Gr4vyBuyersServiceTests: XCTestCase {
 
         // Then
         XCTAssertEqual(result.count, 1)
-        let paymentMethod = result.first!
+        let paymentMethod = try XCTUnwrap(result.first)
         XCTAssertEqual(paymentMethod.type, "payment-method")
         XCTAssertEqual(paymentMethod.id, "payment-method-123")
         XCTAssertEqual(paymentMethod.country, "US")
@@ -319,7 +319,7 @@ final class Gr4vyBuyersServiceTests: XCTestCase {
 
         // Then
         XCTAssertEqual(result.count, 1)
-        let paymentMethod = result.first!
+        let paymentMethod = try XCTUnwrap(result.first)
         XCTAssertEqual(paymentMethod.type, "payment-method")
         XCTAssertEqual(paymentMethod.id, "payment-method-456")
         XCTAssertEqual(paymentMethod.country, "GB")
@@ -445,7 +445,7 @@ final class Gr4vyBuyersServiceTests: XCTestCase {
         let request = Gr4vyBuyersPaymentMethodsRequest(paymentMethods: paymentMethods)
 
         // Invalid JSON data
-        let invalidData = "{ invalid json }".data(using: .utf8)!
+        let invalidData = Data("{ invalid json }".utf8)
         mockHTTPClient.data = invalidData
 
         // When/Then
@@ -519,7 +519,7 @@ final class Gr4vyBuyersServiceTests: XCTestCase {
         let request = Gr4vyBuyersPaymentMethodsRequest(paymentMethods: paymentMethods)
 
         // Invalid JSON data
-        let invalidData = "{ malformed json".data(using: .utf8)!
+        let invalidData = Data("{ malformed json".utf8)
         mockHTTPClient.data = invalidData
 
         // When
@@ -649,7 +649,7 @@ final class Gr4vyBuyersServiceTests: XCTestCase {
         XCTAssertNotNil(mockHTTPClient.lastBody)
 
         // Verify the request body was encoded correctly
-        let bodyJSON = try JSONSerialization.jsonObject(with: mockHTTPClient.lastBody!, options: []) as? [String: Any]
+        let bodyJSON = try JSONSerialization.jsonObject(with: XCTUnwrap(mockHTTPClient.lastBody), options: []) as? [String: Any]
         XCTAssertNotNil(bodyJSON)
 
         let paymentMethodsJSON = bodyJSON?["payment_methods"] as? [String: Any]
@@ -747,7 +747,7 @@ final class Gr4vyBuyersServiceTests: XCTestCase {
                 timeout: TimeInterval?
             ) async throws -> Data {
                 capturedMerchantId = merchantId
-                return try JSONEncoder().encode(mockResponse!)
+                return try JSONEncoder().encode(XCTUnwrap(mockResponse))
             }
         }
 
@@ -789,7 +789,7 @@ final class Gr4vyBuyersServiceTests: XCTestCase {
                 timeout: TimeInterval?
             ) async throws -> Data {
                 capturedMerchantId = merchantId
-                return try JSONEncoder().encode(mockResponse!)
+                return try JSONEncoder().encode(XCTUnwrap(mockResponse))
             }
         }
 
@@ -840,7 +840,7 @@ final class Gr4vyBuyersServiceTests: XCTestCase {
                 timeout: TimeInterval?
             ) async throws -> Data {
                 capturedMerchantId = merchantId
-                return try JSONEncoder().encode(mockResponse!)
+                return try JSONEncoder().encode(XCTUnwrap(mockResponse))
             }
         }
 
@@ -884,7 +884,7 @@ final class Gr4vyBuyersServiceTests: XCTestCase {
                 timeout: TimeInterval?
             ) async throws -> Data {
                 capturedTimeout = timeout
-                return try JSONEncoder().encode(mockResponse!)
+                return try JSONEncoder().encode(XCTUnwrap(mockResponse))
             }
         }
 
@@ -923,7 +923,7 @@ final class Gr4vyBuyersServiceTests: XCTestCase {
                 timeout: TimeInterval?
             ) async throws -> Data {
                 capturedTimeout = timeout
-                return try JSONEncoder().encode(mockResponse!)
+                return try JSONEncoder().encode(XCTUnwrap(mockResponse))
             }
         }
 

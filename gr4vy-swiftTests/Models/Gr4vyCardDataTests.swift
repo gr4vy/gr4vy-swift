@@ -35,8 +35,8 @@ class Gr4vyCardDataTests: XCTestCase {
         let encoder = JSONEncoder()
         let data = try encoder.encode(cardData)
 
-        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
-        let method = json["payment_method"] as! [String: Any]
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let method = try XCTUnwrap(json["payment_method"] as? [String: Any])
 
         XCTAssertEqual(method["method"] as? String, "card")
         XCTAssertEqual(method["number"] as? String, "4111111111111111")
@@ -67,8 +67,8 @@ class Gr4vyCardDataTests: XCTestCase {
         let encoder = JSONEncoder()
         let data = try encoder.encode(cardData)
 
-        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
-        let method = json["payment_method"] as! [String: Any]
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let method = try XCTUnwrap(json["payment_method"] as? [String: Any])
 
         XCTAssertEqual(method["method"] as? String, "click_to_pay")
         XCTAssertEqual(method["merchant_transaction_id"] as? String, "txn_123")
@@ -98,8 +98,8 @@ class Gr4vyCardDataTests: XCTestCase {
         let encoder = JSONEncoder()
         let data = try encoder.encode(cardData)
 
-        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
-        let method = json["payment_method"] as! [String: Any]
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let method = try XCTUnwrap(json["payment_method"] as? [String: Any])
 
         XCTAssertEqual(method["method"] as? String, "id")
         XCTAssertEqual(method["id"] as? String, "pm_123")
@@ -138,7 +138,7 @@ class Gr4vyCardDataTests: XCTestCase {
         }
         """
 
-        let data = json.data(using: .utf8)!
+        let data = Data(json.utf8)
         let decoder = JSONDecoder()
         let cardData = try decoder.decode(Gr4vyCardData.self, from: data)
 
@@ -162,7 +162,7 @@ class Gr4vyCardDataTests: XCTestCase {
         }
         """
 
-        let data = json.data(using: .utf8)!
+        let data = Data(json.utf8)
         let decoder = JSONDecoder()
         let cardData = try decoder.decode(Gr4vyCardData.self, from: data)
 
@@ -185,7 +185,7 @@ class Gr4vyCardDataTests: XCTestCase {
         }
         """
 
-        let data = json.data(using: .utf8)!
+        let data = Data(json.utf8)
         let decoder = JSONDecoder()
         let cardData = try decoder.decode(Gr4vyCardData.self, from: data)
 
@@ -207,7 +207,7 @@ class Gr4vyCardDataTests: XCTestCase {
         }
         """
 
-        let data = json.data(using: .utf8)!
+        let data = Data(json.utf8)
         let decoder = JSONDecoder()
 
         XCTAssertThrowsError(try decoder.decode(Gr4vyCardData.self, from: data)) { error in
@@ -254,7 +254,7 @@ class Gr4vyCardDataTests: XCTestCase {
         }
         """
 
-        let data = json.data(using: .utf8)!
+        let data = Data(json.utf8)
         let decoder = JSONDecoder()
 
         XCTAssertThrowsError(try decoder.decode(Gr4vyCardData.self, from: data)) { error in
@@ -269,7 +269,7 @@ class Gr4vyCardDataTests: XCTestCase {
         }
         """
 
-        let data = json.data(using: .utf8)!
+        let data = Data(json.utf8)
         let decoder = JSONDecoder()
 
         XCTAssertThrowsError(try decoder.decode(Gr4vyCardData.self, from: data)) { error in

@@ -34,9 +34,9 @@ class Gr4vyHTTPClientTests: XCTestCase {
     // MARK: - Request Building Tests
     func testHTTPClientBuildsCorrectPOSTRequest() async throws {
         // Setup mock response
-        let mockData = """
+        let mockData = Data("""
         {"success": true}
-        """.data(using: .utf8)!
+        """.utf8)
 
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
@@ -82,8 +82,8 @@ class Gr4vyHTTPClientTests: XCTestCase {
 
         // Verify body
         XCTAssertNotNil(mockSession.lastRequest?.httpBody)
-        let bodyData = mockSession.lastRequest?.httpBody
-        let decodedBody = try JSONSerialization.jsonObject(with: bodyData!) as! [String: Any]
+        let bodyData = try XCTUnwrap(mockSession.lastRequest?.httpBody)
+        let decodedBody = try XCTUnwrap(JSONSerialization.jsonObject(with: bodyData) as? [String: Any])
         XCTAssertEqual(decodedBody["testField"] as? String, "test-value")
 
         // Verify response
@@ -92,9 +92,9 @@ class Gr4vyHTTPClientTests: XCTestCase {
 
     func testHTTPClientBuildsCorrectGETRequest() async throws {
         // Setup mock response
-        let mockData = """
+        let mockData = Data("""
         {"result": "success"}
-        """.data(using: .utf8)!
+        """.utf8)
 
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
@@ -129,8 +129,8 @@ class Gr4vyHTTPClientTests: XCTestCase {
         // Verify query parameters were added
         let requestURL = mockSession.lastRequest?.url
         XCTAssertNotNil(requestURL)
-        XCTAssertTrue(requestURL!.query!.contains("param1=value1"))
-        XCTAssertTrue(requestURL!.query!.contains("param2=42"))
+        XCTAssertTrue(try XCTUnwrap(requestURL?.query).contains("param1=value1"))
+        XCTAssertTrue(try XCTUnwrap(requestURL?.query).contains("param2=42"))
 
         // Verify no body for GET request
         XCTAssertNil(mockSession.lastRequest?.httpBody)
@@ -140,7 +140,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
     }
 
     func testHTTPClientWithDefaultMethodPOST() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -167,7 +167,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
     }
 
     func testHTTPClientWithEmptyMerchantId() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -196,7 +196,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
     }
 
     func testHTTPClientWithNilBody() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -221,7 +221,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
 
     // MARK: - Query Parameter Tests
     func testGETRequestWithComplexQueryParameters() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -253,14 +253,14 @@ class Gr4vyHTTPClientTests: XCTestCase {
 
         let requestURL = mockSession.lastRequest?.url
         XCTAssertNotNil(requestURL)
-        let query = requestURL!.query!
+        let query = try XCTUnwrap(requestURL?.query)
         // The implementation flattens single wrapper keys, so "nested" wrapper is removed
         XCTAssertTrue(query.contains("field1=test"))
         XCTAssertTrue(query.contains("field2=123"))
     }
 
     func testGETRequestWithNullValuesFiltered() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -286,13 +286,13 @@ class Gr4vyHTTPClientTests: XCTestCase {
 
         let requestURL = mockSession.lastRequest?.url
         XCTAssertNotNil(requestURL)
-        let query = requestURL!.query!
+        let query = try XCTUnwrap(requestURL?.query)
         XCTAssertTrue(query.contains("required=test"))
         XCTAssertFalse(query.contains("optional"))
     }
 
     func testGETRequestWithExistingQueryParameters() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -317,7 +317,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
 
         let requestURL = mockSession.lastRequest?.url
         XCTAssertNotNil(requestURL)
-        let query = requestURL!.query!
+        let query = try XCTUnwrap(requestURL?.query)
         XCTAssertTrue(query.contains("existing=value"))
         XCTAssertTrue(query.contains("newParam=newValue"))
     }
@@ -325,9 +325,9 @@ class Gr4vyHTTPClientTests: XCTestCase {
     // MARK: - Error Handling Tests
     func testHTTPClientHandlesHTTPError() async throws {
         // Setup mock error response
-        let errorData = """
+        let errorData = Data("""
         {"error": "Invalid request", "message": "Bad request parameters"}
-        """.data(using: .utf8)!
+        """.utf8)
 
         mockSession.mockData = errorData
         mockSession.mockResponse = HTTPURLResponse(
@@ -366,9 +366,9 @@ class Gr4vyHTTPClientTests: XCTestCase {
     }
 
     func testHTTPClientHandlesHTTPErrorWithErrorField() async throws {
-        let errorData = """
+        let errorData = Data("""
         {"error": "Invalid token"}
-        """.data(using: .utf8)!
+        """.utf8)
 
         mockSession.mockData = errorData
         mockSession.mockResponse = HTTPURLResponse(
@@ -404,7 +404,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
     }
 
     func testHTTPClientHandlesHTTPErrorWithNonJSONResponse() async throws {
-        let errorData = "Internal Server Error".data(using: .utf8)!
+        let errorData = Data("Internal Server Error".utf8)
 
         mockSession.mockData = errorData
         mockSession.mockResponse = HTTPURLResponse(
@@ -440,7 +440,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
     }
 
     func testHTTPClientHandlesHTTPErrorWithInvalidJSONResponse() async throws {
-        let errorData = "invalid json {".data(using: .utf8)!
+        let errorData = Data("invalid json {".utf8)
 
         mockSession.mockData = errorData
         mockSession.mockResponse = HTTPURLResponse(
@@ -564,7 +564,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
         let successCodes = [200, 201, 202, 204, 299]
 
         for statusCode in successCodes {
-            let mockData = "{}".data(using: .utf8)!
+            let mockData = Data("{}".utf8)
             mockSession.mockData = mockData
             mockSession.mockResponse = HTTPURLResponse(
                 url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -596,7 +596,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
         let errorCodes = [300, 400, 401, 404, 500, 502, 503]
 
         for statusCode in errorCodes {
-            let errorData = "{}".data(using: .utf8)!
+            let errorData = Data("{}".utf8)
             mockSession.mockData = errorData
             mockSession.mockResponse = HTTPURLResponse(
                 url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -810,7 +810,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
 
         let debugClient = Gr4vyHTTPClient(configuration: debugConfig)
 
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -839,7 +839,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
 
     // MARK: - Edge Cases Tests
     func testHTTPClientWithVeryLongTimeout() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -867,7 +867,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
     }
 
     func testHTTPClientWithSpecialCharactersInMerchantId() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -902,7 +902,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
         let methods = ["PUT", "PATCH", "DELETE"]
 
         for method in methods {
-            let mockData = "{}".data(using: .utf8)!
+            let mockData = Data("{}".utf8)
             mockSession.mockData = mockData
             mockSession.mockResponse = HTTPURLResponse(
                 url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -961,7 +961,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
     // MARK: - MerchantId Comprehensive Tests
 
     func testHTTPClientWithNilMerchantId() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -994,7 +994,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
     }
 
     func testHTTPClientWithValidMerchantId() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -1031,7 +1031,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
     }
 
     func testHTTPClientMerchantIdEdgeCases() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -1080,7 +1080,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
     }
 
     func testHTTPClientMerchantIdWithDifferentMethods() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -1121,7 +1121,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
     }
 
     func testHTTPClientMerchantIdDoesNotAffectOtherHeaders() async throws {
-        let mockData = "{}".data(using: .utf8)!
+        let mockData = Data("{}".utf8)
         mockSession.mockData = mockData
         mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://api.sandbox.test-id.gr4vy.app/test")!,
@@ -1146,7 +1146,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
             timeout: 45.0
         )
 
-        let requestWithMerchant = mockSession.lastRequest!
+        let requestWithMerchant = try XCTUnwrap(mockSession.lastRequest)
 
         // Test without merchantId (nil)
         _ = try await httpClient.perform(
@@ -1157,7 +1157,7 @@ class Gr4vyHTTPClientTests: XCTestCase {
             timeout: 45.0
         )
 
-        let requestWithoutMerchant = mockSession.lastRequest!
+        let requestWithoutMerchant = try XCTUnwrap(mockSession.lastRequest)
 
         // Verify other headers are identical
         XCTAssertEqual(
@@ -1188,9 +1188,9 @@ class Gr4vyHTTPClientTests: XCTestCase {
             httpVersion: nil,
             headerFields: nil
         )
-        mockSession.mockData = """
+        mockSession.mockData = Data("""
         {"error": "Bad Request"}
-        """.data(using: .utf8)!
+        """.utf8)
 
         struct TestRequest: Encodable {
             let test: String

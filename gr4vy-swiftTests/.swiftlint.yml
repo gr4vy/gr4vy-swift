@@ -1,0 +1,19 @@
+# SwiftLint overrides for the test target (merged on top of the root .swiftlint.yml)
+
+# Test classes group many small, independent cases, so file and type length aren't enforced here.
+# Tests pass fake tokens to the logger on purpose (e.g. to exercise masking).
+# Fixtures use literal URLs, and the remaining rules are style preferences not worth enforcing in tests.
+disabled_rules:
+  - file_length
+  - type_body_length
+  - security_sensitive_logging
+  - no_hardcoded_strings
+  - xct_specific_matcher
+  - empty_xctest_method
+  - file_header
+  - multiline_arguments
+
+# Function length is relaxed; warnings start at the root config's error threshold.
+function_body_length:
+  warning: 100
+  error: 200

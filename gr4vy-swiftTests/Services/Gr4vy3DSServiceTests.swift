@@ -678,10 +678,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         // Since it's a private method, we'll validate the behavior through integration
         // This test documents the expected JWK format
         
-        guard let data = validJWK.data(using: .utf8) else {
-            XCTFail("Failed to create data from JWK string")
-            return
-        }
+        let data = Data(validJWK.utf8)
         
         // Then - Verify the JWK can be parsed as valid JSON
         let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
@@ -705,10 +702,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         let invalidJWK = "{ invalid json }"
         
         // When & Then - Verify invalid JSON cannot be parsed
-        guard let data = invalidJWK.data(using: .utf8) else {
-            XCTFail("Failed to create data from string")
-            return
-        }
+        let data = Data(invalidJWK.utf8)
         
         XCTAssertThrowsError(try JSONSerialization.jsonObject(with: data, options: []))
     }
@@ -723,10 +717,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = incompleteJWK.data(using: .utf8) else {
-            XCTFail("Failed to create data from JWK string")
-            return
-        }
+        let data = Data(incompleteJWK.utf8)
         
         // When - Parse the JSON
         let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
@@ -747,10 +738,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         let emptyJWK = ""
         
         // When - Try to parse empty string
-        guard let data = emptyJWK.data(using: .utf8) else {
-            XCTFail("Failed to create data from empty string")
-            return
-        }
+        let data = Data(emptyJWK.utf8)
         
         // Then - Empty JSON should fail parsing
         XCTAssertThrowsError(try JSONSerialization.jsonObject(with: data, options: []))
@@ -762,6 +750,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         let validString = "valid utf-8 string"
         
         // When
+        // Deliberately exercises the optional String-to-Data API that this test checks.
         let data = validString.data(using: .utf8)
         
         // Then
@@ -779,10 +768,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = wrongTypeJWK.data(using: .utf8) else {
-            XCTFail("Failed to create data from JWK string")
-            return
-        }
+        let data = Data(wrongTypeJWK.utf8)
         
         // When - Parse the JSON
         let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
@@ -1109,10 +1095,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = challengeJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(challengeJSON.utf8)
         
         // When - Decode the challenge response
         let decoder = JSONDecoder()
@@ -1141,10 +1124,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = responseJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(responseJSON.utf8)
         
         // When - Decode the response
         let decoder = JSONDecoder()
@@ -1179,10 +1159,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = responseJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(responseJSON.utf8)
         
         // When - Decode the response
         let decoder = JSONDecoder()
@@ -1207,10 +1184,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = responseJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(responseJSON.utf8)
         
         // When - Decode the response
         let decoder = JSONDecoder()
@@ -1237,10 +1211,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = versioningJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(versioningJSON.utf8)
         
         // When - Decode the versioning response
         let decoder = JSONDecoder()
@@ -1262,10 +1233,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = versioningJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(versioningJSON.utf8)
         
         // When - Decode the versioning response
         let decoder = JSONDecoder()
@@ -1315,10 +1283,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = json.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(json.utf8)
         
         // When - Decode
         let decoder = JSONDecoder()
@@ -1469,10 +1434,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = acsJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(acsJSON.utf8)
         
         // When - Decode the ACS rendering type
         let decoder = JSONDecoder()
@@ -1517,10 +1479,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = acsJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(acsJSON.utf8)
         
         // When - Decode the ACS rendering type
         let decoder = JSONDecoder()

@@ -516,7 +516,12 @@ class Gr4vyUtilityTests: XCTestCase {
             timeout: 30
         )
 
-        let methods: [() throws -> URL] = [ { try Gr4vyUtility.paymentOptionsURL(from: invalidSetup) }, { try Gr4vyUtility.cardDetailsURL(from: invalidSetup) }, { try Gr4vyUtility.buyersPaymentMethodsURL(from: invalidSetup) }, { try Gr4vyUtility.checkoutSessionFieldsURL(from: invalidSetup, checkoutSessionId: "valid-session") }, { try Gr4vyUtility.createTransactionURL(from: invalidSetup, checkoutSessionId: "valid-session") }
+        let methods: [() throws -> URL] = [
+            { try Gr4vyUtility.paymentOptionsURL(from: invalidSetup) },
+            { try Gr4vyUtility.cardDetailsURL(from: invalidSetup) },
+            { try Gr4vyUtility.buyersPaymentMethodsURL(from: invalidSetup) },
+            { try Gr4vyUtility.checkoutSessionFieldsURL(from: invalidSetup, checkoutSessionId: "valid-session") },
+            { try Gr4vyUtility.createTransactionURL(from: invalidSetup, checkoutSessionId: "valid-session") },
         ]
 
         for method in methods {

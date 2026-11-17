@@ -274,8 +274,8 @@ final class Gr4vyCheckoutSessionRequestTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("payment_method"))
-        XCTAssertFalse(jsonString!.contains("paymentMethod"))
+        XCTAssertTrue(try XCTUnwrap(jsonString).contains("payment_method"))
+        XCTAssertFalse(try XCTUnwrap(jsonString).contains("paymentMethod"))
     }
 
     // MARK: - Edge Cases
