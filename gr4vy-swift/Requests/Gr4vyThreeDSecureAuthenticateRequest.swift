@@ -34,16 +34,18 @@ struct Gr4vyThreeDSecureAuthenticateRequest: Encodable {
     }
     
     // MARK: - Initializer
-    init(defaultSdkType: DefaultSdkType,
-                deviceChannel: String,
-                deviceRenderOptions: DeviceRenderOptions,
-                sdkAppId: String,
-                sdkEncryptedData: String,
-                sdkEphemeralPubKey: SdkEphemeralPubKey,
-                sdkReferenceNumber: String,
-                sdkMaxTimeoutMinutes: Int,
-                sdkTransactionId: String,
-                timeout: TimeInterval? = nil) {
+    init(
+        defaultSdkType: DefaultSdkType,
+        deviceChannel: String,
+        deviceRenderOptions: DeviceRenderOptions,
+        sdkAppId: String,
+        sdkEncryptedData: String,
+        sdkEphemeralPubKey: SdkEphemeralPubKey,
+        sdkReferenceNumber: String,
+        sdkMaxTimeoutMinutes: Int,
+        sdkTransactionId: String,
+        timeout: TimeInterval? = nil
+    ) {
         self.defaultSdkType = defaultSdkType
         self.deviceChannel = deviceChannel
         self.deviceRenderOptions = deviceRenderOptions

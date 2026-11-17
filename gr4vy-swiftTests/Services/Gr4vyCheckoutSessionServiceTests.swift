@@ -473,18 +473,19 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let checkoutSessionId = "checkout_session_version_123"
         
         // Mock versioning response
-        let versioningResponse = """
+        let versioningResponse = Data("""
         {
             "directory_server_id": "dir_server_001",
             "message_version": "2.2.0",
             "api_key": "test_api_key_12345"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = versioningResponse
         
         // When
-        let result = try await service.callVersioning(checkoutSessionId: checkoutSessionId)
+        let response = try await service.callVersioning(checkoutSessionId: checkoutSessionId)
+        let result = try XCTUnwrap(response)
         
         // Then
         XCTAssertEqual(result.directoryServerId, "dir_server_001")
@@ -536,11 +537,11 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let checkoutSessionId = "checkout_session_version_decode_error"
         
         // Mock invalid JSON response
-        let invalidResponse = """
+        let invalidResponse = Data("""
         {
             "invalid_field": "unexpected_value"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = invalidResponse
         
@@ -593,13 +594,13 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let checkoutSessionId = "checkout_session_version_completion_success"
         
         // Mock versioning response
-        let versioningResponse = """
+        let versioningResponse = Data("""
         {
             "directory_server_id": "dir_server_002",
             "message_version": "2.1.0",
             "api_key": "test_api_key_67890"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = versioningResponse
         
@@ -609,11 +610,13 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         service.callVersioning(checkoutSessionId: checkoutSessionId) { result in
             // Then
             switch result {
-            case .success(let response):
+            case .success(let response?):
                 XCTAssertEqual(response.directoryServerId, "dir_server_002")
                 XCTAssertEqual(response.messageVersion, "2.1.0")
                 XCTAssertEqual(response.apiKey, "test_api_key_67890")
                 expectation.fulfill()
+            case .success(.none):
+                XCTFail("Expected a versioning response, got nil")
             case .failure(let error):
                 XCTFail("Expected success, got error: \(error)")
             }
@@ -658,6 +661,123 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         
         wait(for: [expectation], timeout: 5.0)
     }
+
+    // MARK: - Versioning Tests (Preferred Scheme & 204 No Content)
+
+    func testCallVersioningAppendsPreferredScheme() async throws {
+        // Given
+        let service = Gr4vyCheckoutSessionService(
+            httpClient: mockHTTPClient,
+            configuration: testConfiguration
+        )
+        let checkoutSessionId = "checkout_session_preferredScheme"
+        mockHTTPClient.data = Data("""
+        {
+            "directory_server_id": "dir_server_cb",
+            "message_version": "2.2.0",
+            "api_key": "test_api_key_cb"
+        }
+        """.utf8)
+
+        // When
+        let result = try await service.callVersioning(checkoutSessionId: checkoutSessionId, preferredScheme: "carte-bancaire")
+
+        // Then
+        XCTAssertEqual(result?.directoryServerId, "dir_server_cb")
+        let expectedURL = try Gr4vyUtility.versioningURL(from: testSetup, checkoutSessionId: checkoutSessionId, preferredScheme: "carte-bancaire")
+        XCTAssertEqual(mockHTTPClient.lastURL, expectedURL)
+        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferredScheme=carte-bancaire")
+    }
+
+    func testCallVersioningOmitsQueryWhenPreferredSchemeNilOrEmpty() async throws {
+        // Given
+        let service = Gr4vyCheckoutSessionService(
+            httpClient: mockHTTPClient,
+            configuration: testConfiguration
+        )
+        mockHTTPClient.data = Data("""
+        {
+            "directory_server_id": "dir_server_001",
+            "message_version": "2.2.0",
+            "api_key": "test_api_key_12345"
+        }
+        """.utf8)
+        let omittedValues: [String?] = [nil, ""]
+
+        for preferredScheme in omittedValues {
+            // When
+            _ = try await service.callVersioning(checkoutSessionId: "checkout_session_no_scheme", preferredScheme: preferredScheme)
+
+            // Then
+            let lastURL = try XCTUnwrap(mockHTTPClient.lastURL)
+            XCTAssertNil(lastURL.query, "Expected no query for preferredScheme \(String(describing: preferredScheme))")
+        }
+    }
+
+    func testCallVersioningEmptyBodyReturnsNil() async throws {
+        // Given - an empty body is what a 204 No Content surfaces as through the HTTP client
+        let service = Gr4vyCheckoutSessionService(
+            httpClient: mockHTTPClient,
+            configuration: testConfiguration
+        )
+        mockHTTPClient.data = Data()
+
+        // When - must not throw
+        let result = try await service.callVersioning(checkoutSessionId: "checkout_session_empty_body")
+
+        // Then
+        XCTAssertNil(result)
+        XCTAssertEqual(mockHTTPClient.lastMethod, "GET")
+    }
+
+    func testCallVersioningReturnsNilOnHTTP204() async throws {
+        // Given - drive the real Gr4vyHTTPClient with a 204 + empty body
+        let session = MockURLSession()
+        session.mockData = Data()
+        session.mockResponse = try XCTUnwrap(
+            HTTPURLResponse(
+                url: try XCTUnwrap(URL(string: "https://api.sandbox.test-checkout-id.gr4vy.app")),
+                statusCode: 204,
+                httpVersion: nil,
+                headerFields: nil
+            )
+        )
+        let service = Gr4vyCheckoutSessionService(setup: testSetup, session: session)
+
+        // When - must not throw
+        let result = try await service.callVersioning(checkoutSessionId: "checkout_session_204", preferredScheme: "carte-bancaire")
+
+        // Then
+        XCTAssertNil(result)
+        XCTAssertEqual(session.lastRequest?.httpMethod, "GET")
+        XCTAssertEqual(session.lastRequest?.url?.path, "/checkout/sessions/checkout_session_204/three-d-secure-version")
+        XCTAssertEqual(session.lastRequest?.url?.query, "preferredScheme=carte-bancaire")
+    }
+
+    func testCallVersioningCompletionHandlerReturnsNilOnEmptyBody() throws {
+        // Given
+        let service = Gr4vyCheckoutSessionService(
+            httpClient: mockHTTPClient,
+            configuration: testConfiguration
+        )
+        mockHTTPClient.data = Data()
+        let expectation = XCTestExpectation(description: "Versioning completion with empty body")
+
+        // When
+        service.callVersioning(checkoutSessionId: "checkout_session_empty_body", preferredScheme: "carte-bancaire") { result in
+            // Then
+            switch result {
+            case .success(let response):
+                XCTAssertNil(response)
+            case .failure(let error):
+                XCTFail("Expected success(nil), got error: \(error)")
+            }
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 5.0)
+        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferredScheme=carte-bancaire")
+    }
     
     // MARK: - Create Transaction Tests (Async)
     
@@ -682,7 +802,7 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5
         
         // Mock 3DS challenge response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "CHALLENGE",
             "challenge": {
@@ -699,7 +819,7 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
             "transaction_status": null,
             "cardholder_info": null
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
@@ -754,14 +874,14 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5
         
         // Mock 3DS frictionless response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "FINISH",
             "challenge": null,
             "transaction_status": "Y",
             "cardholder_info": "Authentication successful"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
@@ -807,14 +927,14 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5
         
         // Mock 3DS error response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "ERROR",
             "challenge": null,
             "transaction_status": null,
             "cardholder_info": "Authentication failed"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
@@ -864,7 +984,7 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5
         
         // Mock 3DS challenge response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "CHALLENGE",
             "challenge": {
@@ -881,7 +1001,7 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
             "transaction_status": null,
             "cardholder_info": null
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
@@ -1013,11 +1133,11 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5
         
         // Mock invalid JSON response
-        let invalidResponse = """
+        let invalidResponse = Data("""
         {
             "invalid_field": "unexpected_value"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = invalidResponse
         
@@ -1062,14 +1182,14 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5
         
         // Mock 3DS frictionless response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "FINISH",
             "challenge": null,
             "transaction_status": "Y",
             "cardholder_info": "Success"
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
@@ -1180,14 +1300,14 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 10
         
         // Mock 3DS response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "FINISH",
             "challenge": null,
             "transaction_status": "Y",
             "cardholder_info": null
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         
@@ -1262,14 +1382,14 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let sdkMaxTimeoutMinutes = 5 // Should be encoded as "05"
         
         // Mock 3DS response
-        let threeDSResponse = """
+        let threeDSResponse = Data("""
         {
             "indicator": "FINISH",
             "challenge": null,
             "transaction_status": "Y",
             "cardholder_info": null
         }
-        """.data(using: .utf8)!
+        """.utf8)
         
         mockHTTPClient.data = threeDSResponse
         

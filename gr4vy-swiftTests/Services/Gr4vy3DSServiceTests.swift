@@ -237,9 +237,9 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         let viewController = UIViewController()
         
         // Mock successful tokenization
-        mockHTTPClient.data = Data()
+        mockHTTPClient.data = Data(#"{"unexpected":"value"}"#.utf8)
         
-        // When - Tokenize first, then versioning will fail (no versioning response mocked)
+        // When - Tokenize ignores the body; versioning gets non-empty invalid JSON and fails decoding
         let result = try await threeDSService.tokenize(
             checkoutSessionId: checkoutSessionId,
             cardData: cardData,
@@ -255,6 +255,181 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         XCTAssertNil(result.authentication?.type)
         XCTAssertNil(result.authentication?.transactionStatus)
         XCTAssertFalse(result.authentication?.hasCancelled ?? true)
+    }
+
+    // MARK: - Tokenize With Authentication - Preferred Scheme & 204 No Content Tests
+
+    /// Contract test only: versioning 204 (empty body) -> tokenized, `attempted == false`, no error, and
+    /// `preferredScheme` sent. It can't tell the explicit 204 branch from the catch-all (both return
+    /// `unattemptedAuthenticationResult()` and `Gr4vyLogger` has no test sink); the regression guard for the
+    /// explicit branch is `Gr4vyCheckoutSessionServiceTests.testCallVersioningEmptyBodyReturnsNil` /
+    /// `testCallVersioningReturnsNilOnHTTP204`.
+    func testTokenizeAsyncVersioning204ReturnsUnattemptedWithoutError() async throws {
+        // Given
+        let cardData = Gr4vyCardData(paymentMethod: .card(CardPaymentMethod(
+            number: "4111111111111111",
+            expirationDate: "12/25",
+            securityCode: "123"
+        )))
+
+        // Empty body for both calls: tokenize ignores it, versioning treats it as 204 No Content
+        mockHTTPClient.data = Data()
+
+        // When - must not throw
+        let result = try await threeDSService.tokenize(
+            checkoutSessionId: "checkout_session_versioning_204",
+            cardData: cardData,
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: "carte-bancaire"
+        )
+
+        // Then
+        XCTAssertTrue(result.tokenized)
+        let authentication = try XCTUnwrap(result.authentication)
+        XCTAssertFalse(authentication.attempted)
+        XCTAssertNil(authentication.type)
+        XCTAssertNil(authentication.transactionStatus)
+        XCTAssertFalse(authentication.hasCancelled)
+        // The versioning GET is the last request on this path
+        XCTAssertEqual(mockHTTPClient.lastMethod, "GET")
+        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferredScheme=carte-bancaire")
+    }
+
+    func testTokenizeAsyncWithoutPreferredSchemeSendsNoQuery() async throws {
+        // Given
+        let cardData = Gr4vyCardData(paymentMethod: .card(CardPaymentMethod(
+            number: "4111111111111111",
+            expirationDate: "12/25",
+            securityCode: "123"
+        )))
+        mockHTTPClient.data = Data()
+
+        // When
+        let result = try await threeDSService.tokenize(
+            checkoutSessionId: "checkout_session_no_preferredScheme",
+            cardData: cardData,
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true
+        )
+
+        // Then
+        XCTAssertFalse(result.authentication?.attempted ?? true)
+        XCTAssertEqual(mockHTTPClient.lastMethod, "GET")
+        let lastURL = try XCTUnwrap(mockHTTPClient.lastURL)
+        XCTAssertNil(lastURL.query)
+    }
+
+    /// Contract test only: versioning 204 (empty body) -> tokenized, `attempted == false`, no error, and
+    /// `preferredScheme` sent. It can't tell the explicit 204 branch from the catch-all (both return
+    /// `unattemptedAuthenticationResult()` and `Gr4vyLogger` has no test sink); the regression guard for the
+    /// explicit branch is `Gr4vyCheckoutSessionServiceTests.testCallVersioningEmptyBodyReturnsNil` /
+    /// `testCallVersioningReturnsNilOnHTTP204`.
+    func testTokenizeCompletionVersioning204ReturnsUnattempted() throws {
+        // Given
+        let cardData = Gr4vyCardData(paymentMethod: .card(CardPaymentMethod(
+            number: "4111111111111111",
+            expirationDate: "12/25",
+            securityCode: "123"
+        )))
+        mockHTTPClient.data = Data()
+        let expectation = XCTestExpectation(description: "Tokenize completion with versioning 204")
+
+        // When
+        threeDSService.tokenize(
+            checkoutSessionId: "checkout_session_versioning_204_completion",
+            cardData: cardData,
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true,
+            preferredScheme: "carte-bancaire"
+        ) { result in
+            // Then
+            switch result {
+            case .success(let tokenizeResult):
+                XCTAssertTrue(tokenizeResult.tokenized)
+                XCTAssertNotNil(tokenizeResult.authentication)
+                XCTAssertFalse(tokenizeResult.authentication?.attempted ?? true)
+                XCTAssertNil(tokenizeResult.authentication?.type)
+                XCTAssertNil(tokenizeResult.authentication?.transactionStatus)
+                XCTAssertFalse(tokenizeResult.authentication?.hasCancelled ?? true)
+            case .failure(let error):
+                XCTFail("Expected success, got error: \(error)")
+            }
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 5.0)
+        XCTAssertEqual(mockHTTPClient.lastMethod, "GET")
+        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferredScheme=carte-bancaire")
+    }
+
+    func testTokenizeWithPreferredSchemeAndAuthenticateFalseSkipsVersioning() async throws {
+        // Given
+        let cardData = Gr4vyCardData(paymentMethod: .card(CardPaymentMethod(
+            number: "4111111111111111",
+            expirationDate: "12/25",
+            securityCode: "123"
+        )))
+        mockHTTPClient.data = Data()
+
+        // When
+        let result = try await threeDSService.tokenize(
+            checkoutSessionId: "checkout_session_no_auth_preferredScheme",
+            cardData: cardData,
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: false,
+            preferredScheme: "carte-bancaire"
+        )
+
+        // Then - only the PUT /fields call was made; versioning was never called
+        XCTAssertTrue(result.tokenized)
+        XCTAssertNil(result.authentication)
+        XCTAssertEqual(mockHTTPClient.lastMethod, "PUT")
+        XCTAssertNil(mockHTTPClient.lastURL?.query)
+    }
+
+    func testTokenizeAsyncWithVersioningResponseProceedsToThreeDSAuthentication() async throws {
+        // Given - a non-empty versioning response, so tokenize must not short-circuit to "not attempted".
+        // The fake API key isn't a valid UUID, so the real 3DS SDK rejects it offline during initialization.
+        let cardData = Gr4vyCardData(paymentMethod: .card(CardPaymentMethod(
+            number: "4111111111111111",
+            expirationDate: "12/25",
+            securityCode: "123"
+        )))
+        mockHTTPClient.data = Data("""
+        {
+            "directory_server_id": "dir_server_cb",
+            "message_version": "2.2.0",
+            "api_key": "test_api_key_cb"
+        }
+        """.utf8)
+
+        // When
+        do {
+            let result = try await threeDSService.tokenize(
+                checkoutSessionId: "checkout_session_versioning_ok",
+                cardData: cardData,
+                viewController: UIViewController(),
+                sdkMaxTimeoutMinutes: 5,
+                authenticate: true,
+                preferredScheme: "carte-bancaire"
+            )
+            XCTFail("Expected 3DS SDK initialization to fail, got \(result)")
+        } catch let error as Gr4vyError {
+            // Then - the flow reached the 3DS SDK step instead of returning attempted == false
+            guard case .threeDSError(let description) = error else {
+                return XCTFail("Expected .threeDSError, got \(error)")
+            }
+            XCTAssertTrue(description.hasPrefix("ThreeDS2Service initialization failed"), description)
+        }
+
+        // The versioning GET (with the preferred scheme) was the last request; the authenticate POST was never sent
+        XCTAssertEqual(mockHTTPClient.lastMethod, "GET")
+        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferredScheme=carte-bancaire")
     }
     
     // MARK: - Tokenize Error Handling Tests
@@ -678,10 +853,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         // Since it's a private method, we'll validate the behavior through integration
         // This test documents the expected JWK format
         
-        guard let data = validJWK.data(using: .utf8) else {
-            XCTFail("Failed to create data from JWK string")
-            return
-        }
+        let data = Data(validJWK.utf8)
         
         // Then - Verify the JWK can be parsed as valid JSON
         let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
@@ -705,10 +877,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         let invalidJWK = "{ invalid json }"
         
         // When & Then - Verify invalid JSON cannot be parsed
-        guard let data = invalidJWK.data(using: .utf8) else {
-            XCTFail("Failed to create data from string")
-            return
-        }
+        let data = Data(invalidJWK.utf8)
         
         XCTAssertThrowsError(try JSONSerialization.jsonObject(with: data, options: []))
     }
@@ -723,10 +892,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = incompleteJWK.data(using: .utf8) else {
-            XCTFail("Failed to create data from JWK string")
-            return
-        }
+        let data = Data(incompleteJWK.utf8)
         
         // When - Parse the JSON
         let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
@@ -747,10 +913,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         let emptyJWK = ""
         
         // When - Try to parse empty string
-        guard let data = emptyJWK.data(using: .utf8) else {
-            XCTFail("Failed to create data from empty string")
-            return
-        }
+        let data = Data(emptyJWK.utf8)
         
         // Then - Empty JSON should fail parsing
         XCTAssertThrowsError(try JSONSerialization.jsonObject(with: data, options: []))
@@ -762,6 +925,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         let validString = "valid utf-8 string"
         
         // When
+        // Deliberately exercises the optional String-to-Data API that this test checks.
         let data = validString.data(using: .utf8)
         
         // Then
@@ -779,10 +943,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = wrongTypeJWK.data(using: .utf8) else {
-            XCTFail("Failed to create data from JWK string")
-            return
-        }
+        let data = Data(wrongTypeJWK.utf8)
         
         // When - Parse the JSON
         let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
@@ -1109,10 +1270,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = challengeJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(challengeJSON.utf8)
         
         // When - Decode the challenge response
         let decoder = JSONDecoder()
@@ -1141,10 +1299,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = responseJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(responseJSON.utf8)
         
         // When - Decode the response
         let decoder = JSONDecoder()
@@ -1179,10 +1334,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = responseJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(responseJSON.utf8)
         
         // When - Decode the response
         let decoder = JSONDecoder()
@@ -1207,10 +1359,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = responseJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(responseJSON.utf8)
         
         // When - Decode the response
         let decoder = JSONDecoder()
@@ -1237,10 +1386,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = versioningJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(versioningJSON.utf8)
         
         // When - Decode the versioning response
         let decoder = JSONDecoder()
@@ -1262,10 +1408,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = versioningJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(versioningJSON.utf8)
         
         // When - Decode the versioning response
         let decoder = JSONDecoder()
@@ -1315,10 +1458,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = json.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(json.utf8)
         
         // When - Decode
         let decoder = JSONDecoder()
@@ -1469,10 +1609,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = acsJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(acsJSON.utf8)
         
         // When - Decode the ACS rendering type
         let decoder = JSONDecoder()
@@ -1517,10 +1654,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         }
         """
         
-        guard let data = acsJSON.data(using: .utf8) else {
-            XCTFail("Failed to create data from JSON string")
-            return
-        }
+        let data = Data(acsJSON.utf8)
         
         // When - Decode the ACS rendering type
         let decoder = JSONDecoder()

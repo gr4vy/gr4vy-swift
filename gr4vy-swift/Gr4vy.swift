@@ -20,9 +20,15 @@ enum UIContext {
         return top(from: root)
     }
     private static func top(from vc: UIViewController?) -> UIViewController? {
-        if let nav = vc as? UINavigationController { return top(from: nav.visibleViewController) }
-        if let tab = vc as? UITabBarController { return top(from: tab.selectedViewController) }
-        if let presented = vc?.presentedViewController { return top(from: presented) }
+        if let nav = vc as? UINavigationController {
+            return top(from: nav.visibleViewController)
+        }
+        if let tab = vc as? UITabBarController {
+            return top(from: tab.selectedViewController)
+        }
+        if let presented = vc?.presentedViewController {
+            return top(from: presented)
+        }
         return vc
     }
 }
@@ -182,9 +188,10 @@ extension Gr4vy {
     ///   - checkoutSessionId: Unique identifier for the checkout session from Gr4vy
     ///   - cardData: Payment method data to be securely tokenized
     ///   - viewController: View controller to present the 3DS challenge screen
-    ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes (default: 5)
+    ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes
     ///   - authenticate: This controls if we should attempt to authenticate the card data (default: false)
     ///   - uiCustomization: Optional UI customization for the 3DS challenge screen
+    ///   - preferredScheme: Optional Gr4vy scheme ID the cardholder chose on a co-badged card (e.g. "carte-bancaire"). 3DS runs on this scheme. If the card doesn't carry it, Gr4vy uses the card's primary scheme. If the scheme isn't set up for 3DS, or isn't a Gr4vy scheme ID, the result has `authentication.attempted == false`. Omit or pass nil to keep the default behaviour. Only used when `authenticate` is true.
     /// - Returns: `Gr4vyTokenizeResult` containing tokenization status and authentication details
     /// - SeeAlso: `Gr4vyTokenizeResult` for the result structure
     /// - SeeAlso: `Gr4vyThreeDSUiCustomizationMap` for UI customization options
@@ -194,7 +201,8 @@ extension Gr4vy {
         viewController: UIViewController,
         sdkMaxTimeoutMinutes: Int,
         authenticate: Bool = false,
-        uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil
+        uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil,
+        preferredScheme: String? = nil
     ) async throws -> Gr4vyTokenizeResult {
         try await threeDS.tokenize(
             checkoutSessionId: checkoutSessionId,
@@ -202,7 +210,8 @@ extension Gr4vy {
             viewController: viewController,
             sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes,
             authenticate: authenticate,
-            uiCustomization: uiCustomization
+            uiCustomization: uiCustomization,
+            preferredScheme: preferredScheme
         )
     }
     
@@ -217,15 +226,17 @@ extension Gr4vy {
     ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes (default: 5)
     ///   - authenticate: This controls if we should attempt to authenticate the card data (default: false)
     ///   - uiCustomization: Optional UI customization for the 3DS challenge screen
+    ///   - preferredScheme: Optional Gr4vy scheme ID the cardholder chose on a co-badged card (e.g. "carte-bancaire"). 3DS runs on this scheme. If the card doesn't carry it, Gr4vy uses the card's primary scheme. If the scheme isn't set up for 3DS, or isn't a Gr4vy scheme ID, the result has `authentication.attempted == false`. Omit or pass nil to keep the default behaviour. Only used when `authenticate` is true.
     /// - Returns: `Gr4vyTokenizeResult` containing tokenization status and authentication details
     /// - Throws: `Gr4vyError.uiContextError` if unable to resolve a presenting view controller
-    /// - SeeAlso: `tokenize(checkoutSessionId:cardData:viewController:sdkMaxTimeoutMinutes:authenticate:uiCustomization:)` for explicit view controller control
+    /// - SeeAlso: `tokenize(checkoutSessionId:cardData:viewController:sdkMaxTimeoutMinutes:authenticate:uiCustomization:preferredScheme:)` for explicit view controller control
     public func tokenize(
         checkoutSessionId: String,
         cardData: Gr4vyCardData,
         sdkMaxTimeoutMinutes: Int = 5,
         authenticate: Bool = false,
-        uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil
+        uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil,
+        preferredScheme: String? = nil
     ) async throws -> Gr4vyTokenizeResult {
         guard let presenter = await UIContext.defaultPresenter() else {
             throw Gr4vyError.uiContextError("Unable to resolve presenting view controller")
@@ -236,7 +247,8 @@ extension Gr4vy {
             viewController: presenter,
             sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes,
             authenticate: authenticate,
-            uiCustomization: uiCustomization
+            uiCustomization: uiCustomization,
+            preferredScheme: preferredScheme
         )
     }
 
@@ -252,8 +264,9 @@ extension Gr4vy {
     ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes (default: 5)
     ///   - authenticate: This controls if we should attempt to authenticate the card data (default: false)
     ///   - uiCustomization: Optional UI customization for the 3DS challenge screen
+    ///   - preferredScheme: Optional Gr4vy scheme ID the cardholder chose on a co-badged card (e.g. "carte-bancaire"). 3DS runs on this scheme. If the card doesn't carry it, Gr4vy uses the card's primary scheme. If the scheme isn't set up for 3DS, or isn't a Gr4vy scheme ID, the result has `authentication.attempted == false`. Omit or pass nil to keep the default behaviour. Only used when `authenticate` is true.
     ///   - completion: Result callback with tokenization result or error
-    /// - SeeAlso: `tokenize(checkoutSessionId:cardData:viewController:sdkMaxTimeoutMinutes:authenticate:uiCustomization:)` for async/await version
+    /// - SeeAlso: `tokenize(checkoutSessionId:cardData:viewController:sdkMaxTimeoutMinutes:authenticate:uiCustomization:preferredScheme:)` for async/await version
     public func tokenize(
         checkoutSessionId: String,
         cardData: Gr4vyCardData,
@@ -261,6 +274,7 @@ extension Gr4vy {
         sdkMaxTimeoutMinutes: Int = 5,
         authenticate: Bool = false,
         uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil,
+        preferredScheme: String? = nil,
         completion: @escaping (Result<Gr4vyTokenizeResult, Error>) -> Void
     ) {
         threeDS.tokenize(
@@ -270,6 +284,7 @@ extension Gr4vy {
             sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes,
             authenticate: authenticate,
             uiCustomization: uiCustomization,
+            preferredScheme: preferredScheme,
             completion: completion
         )
     }
@@ -285,14 +300,16 @@ extension Gr4vy {
     ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes (default: 5)
     ///   - authenticate: This controls if we should attempt to authenticate the card data (default: false)
     ///   - uiCustomization: Optional UI customization for the 3DS challenge screen
+    ///   - preferredScheme: Optional Gr4vy scheme ID the cardholder chose on a co-badged card (e.g. "carte-bancaire"). 3DS runs on this scheme. If the card doesn't carry it, Gr4vy uses the card's primary scheme. If the scheme isn't set up for 3DS, or isn't a Gr4vy scheme ID, the result has `authentication.attempted == false`. Omit or pass nil to keep the default behaviour. Only used when `authenticate` is true.
     ///   - completion: Result callback with tokenization result or error. May return `Gr4vyError.uiContextError` if unable to resolve a presenting view controller
-    /// - SeeAlso: `tokenize(checkoutSessionId:cardData:viewController:sdkMaxTimeoutMinutes:authenticate:uiCustomization:completion:)` for explicit view controller control
+    /// - SeeAlso: `tokenize(checkoutSessionId:cardData:viewController:sdkMaxTimeoutMinutes:authenticate:uiCustomization:preferredScheme:completion:)` for explicit view controller control
     public func tokenize(
         checkoutSessionId: String,
         cardData: Gr4vyCardData,
         sdkMaxTimeoutMinutes: Int = 5,
         authenticate: Bool = false,
         uiCustomization: Gr4vyThreeDSUiCustomizationMap? = nil,
+        preferredScheme: String? = nil,
         completion: @escaping (Result<Gr4vyTokenizeResult, Error>) -> Void
     ) {
         Task { @MainActor in
@@ -307,6 +324,7 @@ extension Gr4vy {
                 sdkMaxTimeoutMinutes: sdkMaxTimeoutMinutes,
                 authenticate: authenticate,
                 uiCustomization: uiCustomization,
+                preferredScheme: preferredScheme,
                 completion: completion
             )
         }

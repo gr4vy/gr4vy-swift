@@ -71,9 +71,12 @@ public enum Gr4vyPaymentOptionContext: Codable {
 
     public func encode(to encoder: Encoder) throws {
         switch self {
-        case .wallet(let ctx):   try ctx.encode(to: encoder)
-        case .google(let ctx):   try ctx.encode(to: encoder)
-        case .payment(let ctx):  try ctx.encode(to: encoder)
+        case .wallet(let ctx):
+            try ctx.encode(to: encoder)
+        case .google(let ctx):
+            try ctx.encode(to: encoder)
+        case .payment(let ctx):
+            try ctx.encode(to: encoder)
         }
     }
 

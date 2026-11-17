@@ -35,16 +35,18 @@ public struct Gr4vyCardDetails: Codable {
     }
 
     // MARK: - Initializer
-    public init(currency: String,
-                amount: String? = nil,
-                bin: String? = nil,
-                country: String? = nil,
-                intent: String? = nil,
-                isSubsequentPayment: Bool? = nil,
-                merchantInitiated: Bool? = nil,
-                metadata: String? = nil,
-                paymentMethodId: String? = nil,
-                paymentSource: String? = nil) {
+    public init(
+        currency: String,
+        amount: String? = nil,
+        bin: String? = nil,
+        country: String? = nil,
+        intent: String? = nil,
+        isSubsequentPayment: Bool? = nil,
+        merchantInitiated: Bool? = nil,
+        metadata: String? = nil,
+        paymentMethodId: String? = nil,
+        paymentSource: String? = nil
+    ) {
         self.currency = currency
         self.amount = amount
         self.bin = bin

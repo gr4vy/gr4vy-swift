@@ -9,6 +9,7 @@ import Foundation
 @testable import gr4vy_swift
 import ThreeDS_SDK
 import UIKit
+import XCTest
 
 final class MockHTTPClient: Gr4vyHTTPClientProtocol {
     // MARK: – Fixtures tailored per test
@@ -84,12 +85,12 @@ class MockURLSession: URLSessionProtocol {
         }
 
         let data = mockData ?? Data()
-        let response = mockResponse ?? HTTPURLResponse(
-            url: request.url!,
+        let response = try mockResponse ?? XCTUnwrap(HTTPURLResponse(
+            url: XCTUnwrap(request.url),
             statusCode: 200,
             httpVersion: nil,
             headerFields: nil
-        )!
+        ))
 
         return (data, response)
     }

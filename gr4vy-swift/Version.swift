@@ -9,5 +9,5 @@ import Foundation
 
 internal struct Version {
     // MARK: - Properties
-    static let current = "1.2.0"
+    static let current = "1.3.0"
 }

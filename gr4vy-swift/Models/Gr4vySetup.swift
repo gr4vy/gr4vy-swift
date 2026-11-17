@@ -26,11 +26,13 @@ public struct Gr4vySetup: Encodable {
     }
     
     // MARK: - Initializer
-    public init(gr4vyId: String,
-                token: String?,
-                merchantId: String?,
-                server: Gr4vyServer,
-                timeout: TimeInterval = 30) {
+    public init(
+        gr4vyId: String,
+        token: String?,
+        merchantId: String?,
+        server: Gr4vyServer,
+        timeout: TimeInterval = 30
+    ) {
         self.gr4vyId = gr4vyId
         self.token = token
         self.merchantId = merchantId
