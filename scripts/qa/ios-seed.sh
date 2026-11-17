@@ -14,6 +14,7 @@ set -euo pipefail
 
 CURRENCY=$1; PAN=$2; CVV=$3; PREFERRED=${4:-}; AUTHENTICATE=${5:-true}
 APP=app.gr4vy.Gr4vy-SwiftUI-Sample-App
+xcrun simctl get_app_container booted "$APP" > /dev/null || { echo "$APP isn't installed on a booted simulator" >&2; exit 1; }
 ID=$(gr4vy config show | awk '$1=="id"{print $2}')
 MERCHANT=$(gr4vy config show | awk '$1=="merchant_account_id"{print $2}')
 [ "$(gr4vy config show | awk '$1=="environment"{print $2}')" = "sandbox" ] || { echo "Sandbox profiles only" >&2; exit 1; }
@@ -38,4 +39,7 @@ w fields_authenticate -bool "$AUTHENTICATE"
 w fields_preferred_scheme -string "$PREFERRED"
 
 nohup xcrun simctl launch --console-pty --terminate-running-process booted "$APP" > "${QA_LOG:-/dev/null}" 2>&1 &
+LAUNCH=$!
+sleep 2
+kill -0 "$LAUNCH" 2>/dev/null || { echo "App launch failed${QA_LOG:+, see $QA_LOG}" >&2; exit 1; }
 echo "session=$SESSION currency=$CURRENCY card=${PAN:0:6}… preferred='$PREFERRED' authenticate=$AUTHENTICATE log=${QA_LOG:-none}"

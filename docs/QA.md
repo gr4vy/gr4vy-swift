@@ -37,6 +37,7 @@ Test cards are the Netcetera ones built into the client app. Expiry `01/30`. Fri
 | 4 | Challenge, cancelled | Visa challenge, GBP, tap Cancel | as 3 | `attempted: true`, `user_cancelled: true` |
 | 5 | Authentication off | Visa frictionless, GBP, Authenticate off | `PUT …/fields` only, no version call | `tokenized: true`, no `authentication` attempt |
 | 6 | Version call fails | any, with a broken token or session | version 4xx/5xx | `attempted: false`, no crash |
+| 7 | Challenge, timed out | Visa challenge, GBP, leave the challenge open past the challenge timeout (at least five minutes) | as 3 | `attempted: true`, `hasTimedOut: true`, no `transaction_status` |
 
 Add feature rows on top of this. For a new request parameter, that means absent, empty, valid, invalid and the documented example, as in principle 5.
 
