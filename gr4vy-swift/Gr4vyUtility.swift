@@ -96,7 +96,7 @@ public struct Gr4vyUtility {
         components.host = "api.\(subdomainPrefix)\(validatedGr4vyId).gr4vy.app"
         components.path = "/checkout/sessions/\(encodedSessionId)/three-d-secure-version"
         if let preferredScheme, !preferredScheme.isEmpty {
-            components.queryItems = [URLQueryItem(name: "preferred_scheme", value: preferredScheme)]
+            components.queryItems = [URLQueryItem(name: "preferredScheme", value: preferredScheme)]
         }
 
         guard let url = components.url else {

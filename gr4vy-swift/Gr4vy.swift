@@ -191,7 +191,7 @@ extension Gr4vy {
     ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes
     ///   - authenticate: This controls if we should attempt to authenticate the card data (default: false)
     ///   - uiCustomization: Optional UI customization for the 3DS challenge screen
-    ///   - preferredScheme: Optional card scheme the cardholder selected on a co-badged card (e.g. "cartes-bancaires"). 3DS runs on this scheme; if it's invalid, Gr4vy falls back to the card's main scheme. If the scheme isn't set up for 3DS, the result has `authentication.attempted == false`. Omit or pass nil to keep the default behaviour. Only used when `authenticate` is true.
+    ///   - preferredScheme: Optional Gr4vy scheme ID the cardholder chose on a co-badged card (e.g. "carte-bancaire"). 3DS runs on this scheme. If the card doesn't carry it, Gr4vy uses the card's primary scheme. If the scheme isn't set up for 3DS, or isn't a Gr4vy scheme ID, the result has `authentication.attempted == false`. Omit or pass nil to keep the default behaviour. Only used when `authenticate` is true.
     /// - Returns: `Gr4vyTokenizeResult` containing tokenization status and authentication details
     /// - SeeAlso: `Gr4vyTokenizeResult` for the result structure
     /// - SeeAlso: `Gr4vyThreeDSUiCustomizationMap` for UI customization options
@@ -226,7 +226,7 @@ extension Gr4vy {
     ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes (default: 5)
     ///   - authenticate: This controls if we should attempt to authenticate the card data (default: false)
     ///   - uiCustomization: Optional UI customization for the 3DS challenge screen
-    ///   - preferredScheme: Optional card scheme the cardholder selected on a co-badged card (e.g. "cartes-bancaires"). 3DS runs on this scheme; if it's invalid, Gr4vy falls back to the card's main scheme. If the scheme isn't set up for 3DS, the result has `authentication.attempted == false`. Omit or pass nil to keep the default behaviour. Only used when `authenticate` is true.
+    ///   - preferredScheme: Optional Gr4vy scheme ID the cardholder chose on a co-badged card (e.g. "carte-bancaire"). 3DS runs on this scheme. If the card doesn't carry it, Gr4vy uses the card's primary scheme. If the scheme isn't set up for 3DS, or isn't a Gr4vy scheme ID, the result has `authentication.attempted == false`. Omit or pass nil to keep the default behaviour. Only used when `authenticate` is true.
     /// - Returns: `Gr4vyTokenizeResult` containing tokenization status and authentication details
     /// - Throws: `Gr4vyError.uiContextError` if unable to resolve a presenting view controller
     /// - SeeAlso: `tokenize(checkoutSessionId:cardData:viewController:sdkMaxTimeoutMinutes:authenticate:uiCustomization:preferredScheme:)` for explicit view controller control
@@ -264,7 +264,7 @@ extension Gr4vy {
     ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes (default: 5)
     ///   - authenticate: This controls if we should attempt to authenticate the card data (default: false)
     ///   - uiCustomization: Optional UI customization for the 3DS challenge screen
-    ///   - preferredScheme: Optional card scheme the cardholder selected on a co-badged card (e.g. "cartes-bancaires"). 3DS runs on this scheme; if it's invalid, Gr4vy falls back to the card's main scheme. If the scheme isn't set up for 3DS, the result has `authentication.attempted == false`. Omit or pass nil to keep the default behaviour. Only used when `authenticate` is true.
+    ///   - preferredScheme: Optional Gr4vy scheme ID the cardholder chose on a co-badged card (e.g. "carte-bancaire"). 3DS runs on this scheme. If the card doesn't carry it, Gr4vy uses the card's primary scheme. If the scheme isn't set up for 3DS, or isn't a Gr4vy scheme ID, the result has `authentication.attempted == false`. Omit or pass nil to keep the default behaviour. Only used when `authenticate` is true.
     ///   - completion: Result callback with tokenization result or error
     /// - SeeAlso: `tokenize(checkoutSessionId:cardData:viewController:sdkMaxTimeoutMinutes:authenticate:uiCustomization:preferredScheme:)` for async/await version
     public func tokenize(
@@ -300,7 +300,7 @@ extension Gr4vy {
     ///   - sdkMaxTimeoutMinutes: Maximum time for 3DS authentication in minutes (default: 5)
     ///   - authenticate: This controls if we should attempt to authenticate the card data (default: false)
     ///   - uiCustomization: Optional UI customization for the 3DS challenge screen
-    ///   - preferredScheme: Optional card scheme the cardholder selected on a co-badged card (e.g. "cartes-bancaires"). 3DS runs on this scheme; if it's invalid, Gr4vy falls back to the card's main scheme. If the scheme isn't set up for 3DS, the result has `authentication.attempted == false`. Omit or pass nil to keep the default behaviour. Only used when `authenticate` is true.
+    ///   - preferredScheme: Optional Gr4vy scheme ID the cardholder chose on a co-badged card (e.g. "carte-bancaire"). 3DS runs on this scheme. If the card doesn't carry it, Gr4vy uses the card's primary scheme. If the scheme isn't set up for 3DS, or isn't a Gr4vy scheme ID, the result has `authentication.attempted == false`. Omit or pass nil to keep the default behaviour. Only used when `authenticate` is true.
     ///   - completion: Result callback with tokenization result or error. May return `Gr4vyError.uiContextError` if unable to resolve a presenting view controller
     /// - SeeAlso: `tokenize(checkoutSessionId:cardData:viewController:sdkMaxTimeoutMinutes:authenticate:uiCustomization:preferredScheme:completion:)` for explicit view controller control
     public func tokenize(

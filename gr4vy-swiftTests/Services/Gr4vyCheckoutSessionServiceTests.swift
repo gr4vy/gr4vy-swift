@@ -670,7 +670,7 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
             httpClient: mockHTTPClient,
             configuration: testConfiguration
         )
-        let checkoutSessionId = "checkout_session_preferred_scheme"
+        let checkoutSessionId = "checkout_session_preferredScheme"
         mockHTTPClient.data = Data("""
         {
             "directory_server_id": "dir_server_cb",
@@ -680,13 +680,13 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         """.utf8)
 
         // When
-        let result = try await service.callVersioning(checkoutSessionId: checkoutSessionId, preferredScheme: "cartes-bancaires")
+        let result = try await service.callVersioning(checkoutSessionId: checkoutSessionId, preferredScheme: "carte-bancaire")
 
         // Then
         XCTAssertEqual(result?.directoryServerId, "dir_server_cb")
-        let expectedURL = try Gr4vyUtility.versioningURL(from: testSetup, checkoutSessionId: checkoutSessionId, preferredScheme: "cartes-bancaires")
+        let expectedURL = try Gr4vyUtility.versioningURL(from: testSetup, checkoutSessionId: checkoutSessionId, preferredScheme: "carte-bancaire")
         XCTAssertEqual(mockHTTPClient.lastURL, expectedURL)
-        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferred_scheme=cartes-bancaires")
+        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferredScheme=carte-bancaire")
     }
 
     func testCallVersioningOmitsQueryWhenPreferredSchemeNilOrEmpty() async throws {
@@ -745,13 +745,13 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let service = Gr4vyCheckoutSessionService(setup: testSetup, session: session)
 
         // When - must not throw
-        let result = try await service.callVersioning(checkoutSessionId: "checkout_session_204", preferredScheme: "cartes-bancaires")
+        let result = try await service.callVersioning(checkoutSessionId: "checkout_session_204", preferredScheme: "carte-bancaire")
 
         // Then
         XCTAssertNil(result)
         XCTAssertEqual(session.lastRequest?.httpMethod, "GET")
         XCTAssertEqual(session.lastRequest?.url?.path, "/checkout/sessions/checkout_session_204/three-d-secure-version")
-        XCTAssertEqual(session.lastRequest?.url?.query, "preferred_scheme=cartes-bancaires")
+        XCTAssertEqual(session.lastRequest?.url?.query, "preferredScheme=carte-bancaire")
     }
 
     func testCallVersioningCompletionHandlerReturnsNilOnEmptyBody() throws {
@@ -764,7 +764,7 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         let expectation = XCTestExpectation(description: "Versioning completion with empty body")
 
         // When
-        service.callVersioning(checkoutSessionId: "checkout_session_empty_body", preferredScheme: "cartes-bancaires") { result in
+        service.callVersioning(checkoutSessionId: "checkout_session_empty_body", preferredScheme: "carte-bancaire") { result in
             // Then
             switch result {
             case .success(let response):
@@ -776,7 +776,7 @@ final class Gr4vyCheckoutSessionServiceTests: XCTestCase {
         }
 
         wait(for: [expectation], timeout: 5.0)
-        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferred_scheme=cartes-bancaires")
+        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferredScheme=carte-bancaire")
     }
     
     // MARK: - Create Transaction Tests (Async)

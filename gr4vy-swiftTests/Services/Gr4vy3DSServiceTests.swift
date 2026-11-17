@@ -260,7 +260,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
     // MARK: - Tokenize With Authentication - Preferred Scheme & 204 No Content Tests
 
     /// Contract test only: versioning 204 (empty body) -> tokenized, `attempted == false`, no error, and
-    /// `preferred_scheme` sent. It can't tell the explicit 204 branch from the catch-all (both return
+    /// `preferredScheme` sent. It can't tell the explicit 204 branch from the catch-all (both return
     /// `unattemptedAuthenticationResult()` and `Gr4vyLogger` has no test sink); the regression guard for the
     /// explicit branch is `Gr4vyCheckoutSessionServiceTests.testCallVersioningEmptyBodyReturnsNil` /
     /// `testCallVersioningReturnsNilOnHTTP204`.
@@ -282,7 +282,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
             viewController: UIViewController(),
             sdkMaxTimeoutMinutes: 5,
             authenticate: true,
-            preferredScheme: "cartes-bancaires"
+            preferredScheme: "carte-bancaire"
         )
 
         // Then
@@ -294,7 +294,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         XCTAssertFalse(authentication.hasCancelled)
         // The versioning GET is the last request on this path
         XCTAssertEqual(mockHTTPClient.lastMethod, "GET")
-        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferred_scheme=cartes-bancaires")
+        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferredScheme=carte-bancaire")
     }
 
     func testTokenizeAsyncWithoutPreferredSchemeSendsNoQuery() async throws {
@@ -308,7 +308,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
 
         // When
         let result = try await threeDSService.tokenize(
-            checkoutSessionId: "checkout_session_no_preferred_scheme",
+            checkoutSessionId: "checkout_session_no_preferredScheme",
             cardData: cardData,
             viewController: UIViewController(),
             sdkMaxTimeoutMinutes: 5,
@@ -323,7 +323,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
     }
 
     /// Contract test only: versioning 204 (empty body) -> tokenized, `attempted == false`, no error, and
-    /// `preferred_scheme` sent. It can't tell the explicit 204 branch from the catch-all (both return
+    /// `preferredScheme` sent. It can't tell the explicit 204 branch from the catch-all (both return
     /// `unattemptedAuthenticationResult()` and `Gr4vyLogger` has no test sink); the regression guard for the
     /// explicit branch is `Gr4vyCheckoutSessionServiceTests.testCallVersioningEmptyBodyReturnsNil` /
     /// `testCallVersioningReturnsNilOnHTTP204`.
@@ -344,7 +344,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
             viewController: UIViewController(),
             sdkMaxTimeoutMinutes: 5,
             authenticate: true,
-            preferredScheme: "cartes-bancaires"
+            preferredScheme: "carte-bancaire"
         ) { result in
             // Then
             switch result {
@@ -363,7 +363,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
 
         wait(for: [expectation], timeout: 5.0)
         XCTAssertEqual(mockHTTPClient.lastMethod, "GET")
-        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferred_scheme=cartes-bancaires")
+        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferredScheme=carte-bancaire")
     }
 
     func testTokenizeWithPreferredSchemeAndAuthenticateFalseSkipsVersioning() async throws {
@@ -377,12 +377,12 @@ final class Gr4vy3DSServiceTests: XCTestCase {
 
         // When
         let result = try await threeDSService.tokenize(
-            checkoutSessionId: "checkout_session_no_auth_preferred_scheme",
+            checkoutSessionId: "checkout_session_no_auth_preferredScheme",
             cardData: cardData,
             viewController: UIViewController(),
             sdkMaxTimeoutMinutes: 5,
             authenticate: false,
-            preferredScheme: "cartes-bancaires"
+            preferredScheme: "carte-bancaire"
         )
 
         // Then - only the PUT /fields call was made; versioning was never called
@@ -416,7 +416,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
                 viewController: UIViewController(),
                 sdkMaxTimeoutMinutes: 5,
                 authenticate: true,
-                preferredScheme: "cartes-bancaires"
+                preferredScheme: "carte-bancaire"
             )
             XCTFail("Expected 3DS SDK initialization to fail, got \(result)")
         } catch let error as Gr4vyError {
@@ -429,7 +429,7 @@ final class Gr4vy3DSServiceTests: XCTestCase {
 
         // The versioning GET (with the preferred scheme) was the last request; the authenticate POST was never sent
         XCTAssertEqual(mockHTTPClient.lastMethod, "GET")
-        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferred_scheme=cartes-bancaires")
+        XCTAssertEqual(mockHTTPClient.lastURL?.query, "preferredScheme=carte-bancaire")
     }
     
     // MARK: - Tokenize Error Handling Tests

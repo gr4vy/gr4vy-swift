@@ -228,11 +228,11 @@ class Gr4vyUtilityTests: XCTestCase {
     }
 
     func testVersioningURLWithPreferredScheme() throws {
-        let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: "cartes-bancaires")
+        let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: "carte-bancaire")
 
-        XCTAssertTrue(url.absoluteString.hasSuffix("/three-d-secure-version?preferred_scheme=cartes-bancaires"))
+        XCTAssertTrue(url.absoluteString.hasSuffix("/three-d-secure-version?preferredScheme=carte-bancaire"))
         XCTAssertEqual(url.path, "/checkout/sessions/session-123/three-d-secure-version")
-        XCTAssertEqual(url.query, "preferred_scheme=cartes-bancaires")
+        XCTAssertEqual(url.query, "preferredScheme=carte-bancaire")
     }
 
     func testVersioningURLEncodesPreferredScheme() throws {
@@ -242,7 +242,7 @@ class Gr4vyUtilityTests: XCTestCase {
         let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
         let queryItems = try XCTUnwrap(components.queryItems)
         XCTAssertEqual(queryItems.count, 1, "`&` must not split the value into a second query item")
-        let item = try XCTUnwrap(queryItems.first { $0.name == "preferred_scheme" })
+        let item = try XCTUnwrap(queryItems.first { $0.name == "preferredScheme" })
         XCTAssertEqual(item.value, scheme)
         XCTAssertNil(url.fragment, "`#` must be encoded, not start a fragment")
         XCTAssertFalse(url.absoluteString.contains(" "))
@@ -251,14 +251,14 @@ class Gr4vyUtilityTests: XCTestCase {
     func testVersioningURLEncodesNonASCIIPreferredScheme() throws {
         let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: "é")
 
-        XCTAssertEqual(url.query, "preferred_scheme=%C3%A9")
+        XCTAssertEqual(url.query, "preferredScheme=%C3%A9")
     }
 
     func testVersioningURLSendsWhitespaceOnlyPreferredScheme() throws {
         // Only nil and "" are omitted; no trimming, so whitespace is sent (encoded)
         let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: "  ")
 
-        XCTAssertEqual(url.query, "preferred_scheme=%20%20")
+        XCTAssertEqual(url.query, "preferredScheme=%20%20")
     }
 
     func testVersioningURLLeavesPlusSignUnencoded() throws {
@@ -266,20 +266,20 @@ class Gr4vyUtilityTests: XCTestCase {
         // Card scheme identifiers never contain "+"; Android encodes it as %2B.
         let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: "a+b")
 
-        XCTAssertEqual(url.query, "preferred_scheme=a+b")
+        XCTAssertEqual(url.query, "preferredScheme=a+b")
     }
 
     func testVersioningURLPreferredSchemeOnProduction() throws {
-        let url = try Gr4vyUtility.versioningURL(from: productionSetup, checkoutSessionId: "session-123", preferredScheme: "cartes-bancaires")
+        let url = try Gr4vyUtility.versioningURL(from: productionSetup, checkoutSessionId: "session-123", preferredScheme: "carte-bancaire")
 
         XCTAssertEqual(url.host, "api.prod-id.gr4vy.app")
         XCTAssertEqual(url.path, "/checkout/sessions/session-123/three-d-secure-version")
-        XCTAssertEqual(url.query, "preferred_scheme=cartes-bancaires")
+        XCTAssertEqual(url.query, "preferredScheme=carte-bancaire")
     }
 
     func testVersioningURLRoundTripsReservedPercentAndNonASCIIPreferredScheme() throws {
         let schemes = [
-            "a&preferred_scheme=visa",
+            "a&preferredScheme=visa",
             "a=b",
             "100%",
             "%41",
@@ -293,7 +293,7 @@ class Gr4vyUtilityTests: XCTestCase {
             let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
             let query = try XCTUnwrap(components.percentEncodedQuery)
             XCTAssertEqual(components.queryItems?.count, 1, "Expected a single query item for '\(scheme)': \(query)")
-            XCTAssertEqual(components.queryItems?.first?.name, "preferred_scheme")
+            XCTAssertEqual(components.queryItems?.first?.name, "preferredScheme")
             XCTAssertEqual(components.queryItems?.first?.value, scheme)
             XCTAssertNil(url.fragment, "Encoded value must not start a fragment for '\(scheme)'")
             XCTAssertTrue(query.unicodeScalars.allSatisfy { $0.value > 0x20 && $0.value < 0x7F }, "Query must be printable ASCII for '\(scheme)': \(query)")
@@ -301,11 +301,11 @@ class Gr4vyUtilityTests: XCTestCase {
     }
 
     func testVersioningURLSendsPreferredSchemeVerbatimWithoutValidation() throws {
-        // No allowlist, trimming or case folding on the client: Core API falls back for invalid values
+        // No allowlist, trimming or case folding on the client: Core API decides what an unknown value means
         for scheme in ["VISA", "Cartes-Bancaires", "not-a-real-scheme", "x"] {
             let url = try Gr4vyUtility.versioningURL(from: sandboxSetup, checkoutSessionId: "session-123", preferredScheme: scheme)
 
-            XCTAssertEqual(url.query, "preferred_scheme=\(scheme)")
+            XCTAssertEqual(url.query, "preferredScheme=\(scheme)")
         }
     }
 

@@ -162,7 +162,7 @@ final class Gr4vy3DSService {
     ///   - sdkMaxTimeoutMinutes: Maximum timeout for 3DS challenge in minutes
     ///   - authenticate: If we should authenticate the user
     ///   - uiCustomization: Optional UI customization for 3DS challenge
-    ///   - preferredScheme: Optional card scheme to run 3DS on (sent as `preferred_scheme` to versioning). Only used when `authenticate` is true.
+    ///   - preferredScheme: Optional card scheme to run 3DS on (sent as `preferredScheme` to versioning). Only used when `authenticate` is true.
     /// - Returns: Gr4vyTokenizeResult containing authentication status and transaction details
     /// - Throws: Gr4vyError if authentication fails or other errors occur
     func tokenize(
@@ -193,7 +193,7 @@ final class Gr4vy3DSService {
     ///   - sdkMaxTimeoutMinutes: Maximum timeout for 3DS challenge in minutes
     ///   - authenticate: If we should authenticate the user
     ///   - uiCustomization: Optional UI customization for 3DS challenge
-    ///   - preferredScheme: Optional card scheme to run 3DS on (sent as `preferred_scheme` to versioning). Only used when `authenticate` is true.
+    ///   - preferredScheme: Optional card scheme to run 3DS on (sent as `preferredScheme` to versioning). Only used when `authenticate` is true.
     ///   - completion: Result callback with Gr4vyTokenizeResult on success or Error on failure
     func tokenize(
         checkoutSessionId: String,
@@ -391,7 +391,7 @@ final class Gr4vy3DSService {
     ///   - sdkMaxTimeoutMinutes: Maximum timeout for 3DS challenge in minutes
     ///   - authenticate: If we should authenticate the user
     ///   - uiCustomization: Optional UI customization for 3DS challenge
-    ///   - preferredScheme: Optional card scheme to run 3DS on (sent as `preferred_scheme` to versioning). Only used when `authenticate` is true.
+    ///   - preferredScheme: Optional card scheme to run 3DS on (sent as `preferredScheme` to versioning). Only used when `authenticate` is true.
     /// - Returns: Gr4vyTokenizeResult containing authentication status and transaction details
     /// - Throws: Gr4vyError if any step fails
     private func performTokenization(
