@@ -145,10 +145,12 @@ jobs:
         CI_RESULT: ${{ needs.ci-complete.result }}
       run: |
         VERSION=$(tr -d '[:space:]' < VERSION)
+        ID='(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+        SEMVER="^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-$ID(\.$ID)*)?\$"
         if [ "$CI_RESULT" != "success" ]; then
           echo "text=CI failed on main: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> "$GITHUB_OUTPUT"
           echo "color=failure" >> "$GITHUB_OUTPUT"
-        elif [[ $VERSION =~ ^[0-9A-Za-z.+-]+$ ]] && [ -z "$(git ls-remote --tags origin "refs/tags/$VERSION")" ]; then
+        elif [[ $VERSION =~ $SEMVER ]] && [ -z "$(git ls-remote --tags origin "refs/tags/$VERSION")" ]; then
           echo "text=$VERSION is ready to release. Run the Release workflow: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/workflows/release.yml" >> "$GITHUB_OUTPUT"
           echo "color=#F3AB0E" >> "$GITHUB_OUTPUT"
         fi

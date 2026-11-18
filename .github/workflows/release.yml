@@ -176,4 +176,4 @@ jobs:
           SLACK_FOOTER: ""
           SLACK_COLOR: "${{ needs.release.result == 'success' && 'success' || 'failure' }}"
           SLACK_MESSAGE_ON_SUCCESS: "${{ needs.prepare.outputs.version }} is released: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.prepare.outputs.version }}"
-          SLACK_MESSAGE_ON_FAILURE: "Release ${{ needs.prepare.outputs.version }} failed or was rejected: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          SLACK_MESSAGE_ON_FAILURE: "Release ${{ needs.prepare.outputs.version || 'from main' }} failed or was rejected: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

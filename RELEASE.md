@@ -8,7 +8,7 @@ Swift Package Manager installs this SDK straight from git tags, so creating a ta
 ./update_version.sh 1.3.1
 ```
 
-This updates `VERSION`, `gr4vy-swift/Version.swift` and the README examples. Commit it in any PR, a feature PR or a small one of its own, and merge it. Bumping the version releases nothing.
+This updates `VERSION`, `gr4vy-swift/Version.swift` and the README examples. Commit it in any PR, a feature PR or a small one of its own, and merge it. Bumping the version releases nothing. If the release includes SDK changes, run [QA](docs/QA.md) on them first.
 
 Use semantic versioning: `1.3.1` for a fix, `1.4.0` for a feature, `2.0.0` for a breaking change, and `1.4.0-beta.1` for a pre-release.
 
@@ -45,3 +45,4 @@ Once approved, the job gets a short-lived token from Octo STS, tags the commit a
 - A tag ruleset on all tags that blocks creation, update and deletion, with only the Octo STS App able to bypass it.
 - Immutable releases turned on.
 - `ci-complete` as the required status check on `main`.
+- This repo on the `SLACK_SDK_WEBHOOK_URL` org secret's repository list, for the `#sdk-updates` notices.
