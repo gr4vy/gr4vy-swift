@@ -78,7 +78,7 @@ jobs:
               echo "| \`${COMMIT:0:7}\` (no PR) | $(git log -1 --format=%an "$COMMIT") | **nobody** |" >> "$GITHUB_STEP_SUMMARY"
               continue
             fi
-            gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" --jq '"| #\(.number) \(.title | gsub("\\|"; "\\\\|")) | \(.user.login) "' \
+            gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" --jq '"| #\(.number) \(.title | gsub("\\|"; "\\|")) | \(.user.login) "' \
               | tr -d '\n' >> "$GITHUB_STEP_SUMMARY"
             APPROVERS=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/reviews" \
               --jq '[.[] | select(.state == "APPROVED") | .user.login] | unique | join(", ")')
@@ -114,7 +114,9 @@ jobs:
           GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
           VERSION: ${{ needs.prepare.outputs.version }}
         run: |
-          TAGGED=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$VERSION" --jq '.object.sha' 2>/dev/null || true)
+          if ! TAGGED=$(gh api "repos/$GITHUB_REPOSITORY/commits/refs/tags/$VERSION" --jq '.sha' 2>/dev/null); then
+            TAGGED=""
+          fi
           if [ -z "$TAGGED" ]; then
             gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$VERSION" -f sha="$GITHUB_SHA" --silent
           elif [ "$TAGGED" != "$GITHUB_SHA" ]; then
