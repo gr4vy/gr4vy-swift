@@ -108,7 +108,6 @@ jobs:
           SLACK_USERNAME: Swift SDK
           SLACK_TITLE: Swift SDK
           SLACK_WEBHOOK: ${{ secrets.SLACK_SDK_WEBHOOK_URL }}
-          SLACK_CHANNEL: sdk-updates
           SLACK_MSG_AUTHOR: gr4vy
           SLACK_ICON_EMOJI: ":gr4vy-sdk:"
           SLACK_FOOTER: ""
@@ -170,7 +169,6 @@ jobs:
           SLACK_USERNAME: Swift SDK
           SLACK_TITLE: Swift SDK
           SLACK_WEBHOOK: ${{ secrets.SLACK_SDK_WEBHOOK_URL }}
-          SLACK_CHANNEL: sdk-updates
           SLACK_MSG_AUTHOR: gr4vy
           SLACK_ICON_EMOJI: ":gr4vy-sdk:"
           SLACK_FOOTER: ""

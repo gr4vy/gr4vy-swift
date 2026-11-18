@@ -14,7 +14,7 @@ Use semantic versioning: `1.3.1` for a fix, `1.4.0` for a feature, `2.0.0` for a
 
 ## 2. Run the Release workflow
 
-When a version bump lands on `main` and CI passes, `#sdk-updates` in Slack says the version is ready to release, with a link to the workflow. It posts again when a run is waiting for approval, and when it's released or fails.
+When a version bump lands on `main` and CI passes, a Slack notice says the version is ready to release, with a link to the workflow. It posts again when a run is waiting for approval, and when it's released or fails.
 
 Once CI on `main` has passed: **Actions → Release → Run workflow**, on `main`.
 
@@ -45,4 +45,4 @@ Once approved, the job gets a short-lived token from Octo STS, tags the commit a
 - A tag ruleset on all tags that blocks creation, update and deletion, with only the Octo STS App able to bypass it.
 - Immutable releases turned on.
 - `ci-complete` as the required status check on `main`.
-- This repo on the `SLACK_SDK_WEBHOOK_URL` org secret's repository list, for the `#sdk-updates` notices.
+- This repo on the `SLACK_SDK_WEBHOOK_URL` org secret's repository list, for the Slack notices.
