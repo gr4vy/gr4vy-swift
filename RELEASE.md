@@ -8,7 +8,7 @@ Swift Package Manager installs this SDK straight from git tags, so creating a ta
 ./update_version.sh 1.3.1
 ```
 
-This updates `VERSION`, `gr4vy-swift/Version.swift` and the README examples. Commit it in any PR, a feature PR or a small one of its own, and merge it. Bumping the version releases nothing. Run [QA](docs/QA.md) before every release, and write it up in `docs/qa-runs/`.
+This updates `VERSION`, `gr4vy-swift/Version.swift` and the README examples. Commit it in any PR, a feature PR or a small one of its own, and merge it. Bumping the version releases nothing. If the release changes SDK code, run [QA](docs/QA.md) first and write it up in `docs/qa-runs/`. A release that only changes CI, docs or the version number needs none.
 
 Use semantic versioning: `1.3.1` for a fix, `1.4.0` for a feature, `2.0.0` for a breaking change, and `1.4.0-beta.1` for a pre-release.
 
