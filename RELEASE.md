@@ -14,6 +14,8 @@ Use semantic versioning: `1.3.1` for a fix, `1.4.0` for a feature, `2.0.0` for a
 
 ## 2. Run the Release workflow
 
+When a version bump lands on `main` and CI passes, `#sdk-updates` in Slack says the version is ready to release, with a link to the workflow. It posts again when a run is waiting for approval, and when it's released or fails.
+
 Once CI on `main` has passed: **Actions → Release → Run workflow**, on `main`.
 
 The first job checks, without any secrets, that:
