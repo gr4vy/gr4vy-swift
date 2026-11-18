@@ -1,85 +1,132 @@
-name: gr4vy-Swift SDK release workflow
+name: Release
+
 on:
-  push:
-    tags:
-      - "*"
-  workflow_dispatch:
+  workflow_dispatch: {}
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
-  release:
-    runs-on: macos-26
+  prepare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
-      contents: write
+      contents: read
+      checks: read
+      pull-requests: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Checkout code
+      - name: Check out main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Set up Xcode
-        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
         with:
-          xcode-version: "26" 
-        
-      - name: Show Xcode version
-        run: xcodebuild -version
-        
-      - name: Clean derived data and build artifacts
-        run: |
-          # Remove all derived data
-          rm -rf ~/Library/Developer/Xcode/DerivedData
-          rm -rf ~/Library/Caches/com.apple.dt.Xcode
-          
-          # Clean Xcode build folder for the main scheme only
-          xcodebuild clean -scheme gr4vy-swift -configuration Release
-          
-          # Clean any remaining build artifacts
-          find . -name "*.build" -type d -exec rm -rf {} + 2>/dev/null || true
-          find . -name "*.xcuserdata" -type d -exec rm -rf {} + 2>/dev/null || true
-      
-      - name: Resolve SPM (prewarm)
-        run: xcodebuild -resolvePackageDependencies -scheme gr4vy-swift
+          persist-credentials: false
+          fetch-depth: 0
 
-      - name: Find and Boot Latest iOS Simulator
-        id: simulator
+      - name: Read the version
+        id: version
         run: |
-          # Get the latest available iOS simulator
-          SIMULATOR_ID=$(xcrun simctl list devices available | grep -i "iphone" | grep -v "unavailable" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
-          if [ -n "$SIMULATOR_ID" ]; then
-            echo "Found simulator ID: $SIMULATOR_ID"
-            xcrun simctl boot "$SIMULATOR_ID" 2>/dev/null || echo "Simulator already booted"
-            echo "id=$SIMULATOR_ID" >> $GITHUB_OUTPUT
-          else
-            echo "No simulator found, using default iPhone 15"
-            echo "id=" >> $GITHUB_OUTPUT
+          VERSION=$(tr -d '[:space:]' < VERSION)
+          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::VERSION is '$VERSION', which isn't a semantic version"
+            exit 1
+          fi
+          if ! grep -q "static let current = \"$VERSION\"" gr4vy-swift/Version.swift; then
+            echo "::error::gr4vy-swift/Version.swift doesn't say $VERSION. Run ./update_version.sh $VERSION."
+            exit 1
+          fi
+          TAGGED=$(git rev-parse -q --verify "refs/tags/$VERSION^{commit}" || true)
+          if [ -n "$TAGGED" ] && [ "$TAGGED" != "$GITHUB_SHA" ]; then
+            echo "::error::$VERSION is already tagged on $TAGGED. Bump VERSION with ./update_version.sh first."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check CI passed on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RESULT=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?check_name=ci-complete" \
+            --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by(.completed_at) | last | .conclusion // "missing"')
+          if [ "$RESULT" != "success" ]; then
+            echo "::error::ci-complete on $GITHUB_SHA is $RESULT. Wait for CI on main to pass."
+            exit 1
           fi
 
-      - name: Build SDK (Release)
+      - name: List what this release ships
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          xcodebuild build \
-            -scheme gr4vy-swift \
-            -sdk iphonesimulator \
-            -configuration Release \
-            ENABLE_TESTABILITY=YES \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO
-      
-      - name: Run tests
-        run: |
-          SIMULATOR_ID="${{ steps.simulator.outputs.id }}"
-          if [ -n "$SIMULATOR_ID" ]; then
-            DESTINATION="platform=iOS Simulator,id=$SIMULATOR_ID"
-          else
-            DESTINATION="platform=iOS Simulator,name=iPhone 15"
+          PREVIOUS=$(git describe --tags --abbrev=0 "$GITHUB_SHA^" 2>/dev/null || true)
+          RANGE=${PREVIOUS:+$PREVIOUS..}$GITHUB_SHA
+          {
+            echo "## Release $VERSION"
+            echo
+            echo "Commit \`$GITHUB_SHA\`, changes since ${PREVIOUS:-the first commit}."
+            echo
+            echo "| PR | Author | Approved by |"
+            echo "| --- | --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for COMMIT in $(git rev-list --first-parent "$RANGE"); do
+            PR=$(gh api "repos/$GITHUB_REPOSITORY/commits/$COMMIT/pulls" --jq '.[0].number // empty')
+            if [ -z "$PR" ]; then
+              echo "| \`${COMMIT:0:7}\` (no PR) | $(git log -1 --format=%an "$COMMIT") | **nobody** |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+            gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" --jq '"| #\(.number) \(.title | gsub("\\|"; "\\\\|")) | \(.user.login) "' \
+              | tr -d '\n' >> "$GITHUB_STEP_SUMMARY"
+            APPROVERS=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/reviews" \
+              --jq '[.[] | select(.state == "APPROVED") | .user.login] | unique | join(", ")')
+            echo "| ${APPROVERS:-**nobody**} |" >> "$GITHUB_STEP_SUMMARY"
+          done
+          SENSITIVE=$(git diff --name-only "$RANGE" -- .github Package.swift Package.resolved gr4vy-swift.xcodeproj scripts update_version.sh)
+          if [ -n "$SENSITIVE" ]; then
+            {
+              echo
+              echo "**Changed paths a person must always review:**"
+              echo
+              echo "$SENSITIVE" | sed 's/^/- `/; s/$/`/'
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
-          xcodebuild test \
-            -scheme gr4vy-swiftTests \
-            -destination "$DESTINATION" \
-            -configuration Release \
-            ENABLE_TESTABILITY=YES \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO
 
-      - name: Create Draft Release
-        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1
+  release:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: release
+    permissions: {}
+    steps:
+      - name: Mint a release token
+        id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          draft: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
 
+      - name: Tag and publish the release
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          TAGGED=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$VERSION" --jq '.object.sha' 2>/dev/null || true)
+          if [ -z "$TAGGED" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$VERSION" -f sha="$GITHUB_SHA" --silent
+          elif [ "$TAGGED" != "$GITHUB_SHA" ]; then
+            echo "::error::$VERSION is already tagged on $TAGGED"
+            exit 1
+          fi
+          if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $VERSION already exists"
+            exit 0
+          fi
+          PRERELEASE=()
+          if [[ $VERSION == *-* ]]; then PRERELEASE=(--prerelease); fi
+          gh release create "$VERSION" --repo "$GITHUB_REPOSITORY" --verify-tag \
+            --title "$VERSION" --generate-notes "${PRERELEASE[@]}"

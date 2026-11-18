@@ -34,14 +34,14 @@ This script will:
 - Update `Version.swift` with the new version
 - Update the `VERSION` file
 - Update test files that reference the version
-- Show you what to do next for SPM (create Git tag)
+- Show you what to do next (merge, then run the Release workflow)
 
 ### Option 2: Manual update
 
 1. Edit `gr4vy-swift/Version.swift` and change the version string
 2. Update the `VERSION` file to match
 3. Update any test files that reference the version
-4. For SPM, create a Git tag: `git tag 1.0.1`
+4. Merge, then run the Release workflow, which creates the tag (see RELEASE.md)
 
 ## Validation
 
