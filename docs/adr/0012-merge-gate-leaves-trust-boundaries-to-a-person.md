@@ -19,7 +19,7 @@ Everything else, including the models, requests, services, the 3DS flow and the 
 ## Considered options
 
 - **Protect every file that handles card data, and the 3DS service.** Rejected. Those are the files most feature PRs change (4 of the 10 commits that changed SDK code in 2026 touched the checkout session service, its request, the card model or the 3DS service), so nearly every PR would need a person again. Any Swift file could open its own connection, so protecting them wouldn't close that gap either. Protecting the files that pick the host and send the request covers the redirect.
-- **A person approves every PR.** Rejected: it's the friction the gate removes, and it led to admin merges.
+- **A person approves every PR.** Rejected: it's the friction the gate exists to remove.
 - **Protect `VERSION` and `Version.swift`.** Rejected: a version bump releases nothing until someone runs the Release workflow and someone else approves it ([ADR 0011](0011-releases-from-a-manual-workflow.md)).
 
 ## Consequences
