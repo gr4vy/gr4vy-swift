@@ -31,7 +31,9 @@ jobs:
         id: version
         run: |
           VERSION=$(tr -d '[:space:]' < VERSION)
-          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+          ID='(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+          SEMVER="^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-$ID(\.$ID)*)?\$"
+          if [[ ! $VERSION =~ $SEMVER ]]; then
             echo "::error::VERSION is '$VERSION', which isn't a semantic version"
             exit 1
           fi
