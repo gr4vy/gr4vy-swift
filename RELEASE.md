@@ -26,7 +26,7 @@ It then lists every PR since the last release, with its author and who approved 
 
 ## 3. Approve it
 
-A Slack notice says the version is waiting for release approval, with a link to the run. The `release` job waits in the `release` environment until someone other than the person who started the run approves it; for an automatic run, that's anyone on the reviewer list other than whoever merged. Approve only if you've read the list and everything in it should ship.
+A Slack notice says the version is waiting for release approval, with a link to the run. The `release` job waits in the `release` environment until a release approver approves it. As in Gr4vy's server SDKs, the approvers are a short list in the environment's settings, and they may approve a run their own merge started; anyone else's release waits for one of them. Approve only if you've read the list and everything in it should ship.
 
 Once approved, the job gets a short-lived token from Octo STS, tags the commit and publishes the GitHub release with generated notes. Releases are immutable: the tag can't be moved or deleted afterwards. Slack says when it's released, or that it failed or was rejected.
 
@@ -38,7 +38,7 @@ Once approved, the job gets a short-lived token from Octo STS, tags the commit a
 
 ## Repo settings this relies on
 
-- A `release` environment that only `main` can deploy to, with required reviewers and self-review prevented. It holds no secrets.
+- A `release` environment that only `main` can deploy to, with a short list of required reviewers, who may approve their own runs. It holds no secrets.
 - The `gr4vy-swift-release` Octo STS policy in the org's `.github` repo, which gives a `contents: write` token on this repo only to `release.yml` on `main`, running in the `release` environment. The Octo STS App must have access to this repo.
 - A tag ruleset on all tags that blocks creation, update and deletion, with only the Octo STS App able to bypass it.
 - Immutable releases turned on.
