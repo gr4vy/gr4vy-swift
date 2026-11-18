@@ -150,9 +150,15 @@ jobs:
         if [ "$CI_RESULT" != "success" ]; then
           echo "text=CI failed on main: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> "$GITHUB_OUTPUT"
           echo "color=failure" >> "$GITHUB_OUTPUT"
-        elif [[ $VERSION =~ $SEMVER ]] && [ -z "$(git ls-remote --tags origin "refs/tags/$VERSION")" ]; then
-          echo "text=$VERSION is ready to release. Run the Release workflow: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/workflows/release.yml" >> "$GITHUB_OUTPUT"
-          echo "color=#F3AB0E" >> "$GITHUB_OUTPUT"
+        elif [[ $VERSION =~ $SEMVER ]]; then
+          # --exit-code: 0 tag found, 2 no such tag, anything else the lookup failed.
+          RC=0; git ls-remote --exit-code --tags origin "refs/tags/$VERSION" > /dev/null || RC=$?
+          if [ "$RC" -eq 2 ]; then
+            echo "text=$VERSION is ready to release. Run the Release workflow: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/workflows/release.yml" >> "$GITHUB_OUTPUT"
+            echo "color=#F3AB0E" >> "$GITHUB_OUTPUT"
+          elif [ "$RC" -ne 0 ]; then
+            echo "::warning::Couldn't check whether $VERSION is tagged (git ls-remote exit $RC); not announcing it."
+          fi
         fi
 
     - name: Slack Notification
