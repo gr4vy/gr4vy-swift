@@ -65,7 +65,7 @@ Add the following to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.3.0")
+    .package(url: "https://github.com/gr4vy/gr4vy-swift.git", from: "1.3.1")
 ]
 ```
 <!-- End SDK Installation [installation] -->
