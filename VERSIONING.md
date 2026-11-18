@@ -34,14 +34,14 @@ This script will:
 - Update `Version.swift` with the new version
 - Update the `VERSION` file
 - Update test files that reference the version
-- Show you what to do next (merge, then run the Release workflow)
+- Show you what to do next (merge, then approve the Release run that CI starts)
 
 ### Option 2: Manual update
 
 1. Edit `gr4vy-swift/Version.swift` and change the version string
 2. Update the `VERSION` file to match
 3. Update any test files that reference the version
-4. Merge, then run the Release workflow, which creates the tag (see RELEASE.md)
+4. Merge; once CI passes, the Release workflow starts, and creates the tag after someone approves it (see RELEASE.md)
 
 ## Validation
 
