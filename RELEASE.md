@@ -8,33 +8,31 @@ Swift Package Manager installs this SDK straight from git tags, so creating a ta
 ./update_version.sh 1.3.1
 ```
 
-This updates `VERSION`, `gr4vy-swift/Version.swift` and the README examples. Commit it in any PR, a feature PR or a small one of its own, and merge it. Bumping the version releases nothing. If the release changes SDK code, run [QA](docs/QA.md) first and write it up in `docs/qa-runs/`. A release that only changes CI, docs or the version number needs none.
+This updates `VERSION`, `gr4vy-swift/Version.swift` and the README examples. Commit it in any PR, a feature PR or a small one of its own, and merge it. Merging starts a release that waits for approval; nothing ships until someone approves it. If the release changes SDK code, run [QA](docs/QA.md) first and write it up in `docs/qa-runs/`. A release that only changes CI, docs or the version number needs none.
 
 Use semantic versioning: `1.3.1` for a fix, `1.4.0` for a feature, `2.0.0` for a breaking change, and `1.4.0-beta.1` for a pre-release.
 
-## 2. Run the Release workflow
+## 2. The Release workflow starts by itself
 
-When a version bump lands on `main` and CI passes, a Slack notice says the version is ready to release, with a link to the workflow. It posts again when a run is waiting for approval, and when it's released or fails.
-
-Once CI on `main` has passed: **Actions → Release → Run workflow**, on `main`.
-
-The first job checks, without any secrets, that:
+When CI passes on `main`, the Release workflow starts for that exact commit. If `VERSION` is already released, it stops there with nothing to do, which is what happens on every merge that doesn't bump the version. Otherwise its first job checks, without any secrets, that:
 
 - `VERSION` is a semantic version and `Version.swift` matches it
 - that version isn't tagged yet (or is tagged on this exact commit, when re-running)
 - `ci-complete` passed on this commit
 
+You can also start it by hand on `main` (**Actions → Release → Run workflow**), for example to retry.
+
 It then lists every PR since the last release, with its author and who approved it, and any change to paths a person must always review. Read that list in the run's summary.
 
 ## 3. Approve it
 
-The `release` job waits for approval in the `release` environment. Someone other than the person who started the run approves it. Approve only if you've read the list and everything in it should ship.
+A Slack notice says the version is waiting for release approval, with a link to the run. The `release` job waits in the `release` environment until someone other than the person who started the run approves it; for an automatic run, that's anyone on the reviewer list other than whoever merged. Approve only if you've read the list and everything in it should ship.
 
-Once approved, the job gets a short-lived token from Octo STS, tags the commit and publishes the GitHub release with generated notes. Releases are immutable: the tag can't be moved or deleted afterwards.
+Once approved, the job gets a short-lived token from Octo STS, tags the commit and publishes the GitHub release with generated notes. Releases are immutable: the tag can't be moved or deleted afterwards. Slack says when it's released, or that it failed or was rejected.
 
 ## If something goes wrong
 
-- **A check fails:** fix it on `main` and run the workflow again.
+- **A check fails:** fix it on `main`; the next green CI run starts the release again, or run it by hand.
 - **The run fails after approval:** run it again. It skips whatever already happened.
 - **A bad release went out:** don't delete or move the tag, because merchants may already have resolved it, and immutable releases forbid it anyway. Fix forward with a new patch version.
 

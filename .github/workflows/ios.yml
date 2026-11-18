@@ -131,38 +131,10 @@ jobs:
 
   notify:
     needs: [ci-complete]
-    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ci-complete.result != 'success'
     runs-on: ubuntu-latest
     steps:
-    - name: Check out main
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      with:
-        persist-credentials: false
-
-    - name: Work out the message
-      id: message
-      env:
-        CI_RESULT: ${{ needs.ci-complete.result }}
-      run: |
-        VERSION=$(tr -d '[:space:]' < VERSION)
-        ID='(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
-        SEMVER="^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-$ID(\.$ID)*)?\$"
-        if [ "$CI_RESULT" != "success" ]; then
-          echo "text=CI failed on main: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> "$GITHUB_OUTPUT"
-          echo "color=failure" >> "$GITHUB_OUTPUT"
-        elif [[ $VERSION =~ $SEMVER ]]; then
-          # --exit-code: 0 tag found, 2 no such tag, anything else the lookup failed.
-          RC=0; git ls-remote --exit-code --tags origin "refs/tags/$VERSION" > /dev/null || RC=$?
-          if [ "$RC" -eq 2 ]; then
-            echo "text=$VERSION is ready to release. Run the Release workflow: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/workflows/release.yml" >> "$GITHUB_OUTPUT"
-            echo "color=#F3AB0E" >> "$GITHUB_OUTPUT"
-          elif [ "$RC" -ne 0 ]; then
-            echo "::warning::Couldn't check whether $VERSION is tagged (git ls-remote exit $RC); not announcing it."
-          fi
-        fi
-
     - name: Slack Notification
-      if: steps.message.outputs.text != ''
       uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661 # v2
       env:
         SLACK_USERNAME: Swift SDK
@@ -170,6 +142,6 @@ jobs:
         SLACK_WEBHOOK: ${{ secrets.SLACK_SDK_WEBHOOK_URL }}
         SLACK_MSG_AUTHOR: gr4vy
         SLACK_ICON_EMOJI: ":gr4vy-sdk:"
-        SLACK_COLOR: ${{ steps.message.outputs.color }}
-        SLACK_MESSAGE: ${{ steps.message.outputs.text }}
+        SLACK_COLOR: failure
+        SLACK_MESSAGE: "CI failed on main: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         SLACK_FOOTER: ""
