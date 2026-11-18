@@ -37,7 +37,7 @@ jobs:
             echo "::error::VERSION is '$VERSION', which isn't a semantic version"
             exit 1
           fi
-          if ! grep -q "static let current = \"$VERSION\"" gr4vy-swift/Version.swift; then
+          if ! grep -qF "static let current = \"$VERSION\"" gr4vy-swift/Version.swift; then
             echo "::error::gr4vy-swift/Version.swift doesn't say $VERSION. Run ./update_version.sh $VERSION."
             exit 1
           fi
@@ -125,7 +125,11 @@ jobs:
             echo "::error::$VERSION is already tagged on $TAGGED"
             exit 1
           fi
-          if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          if DRAFT=$(gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null); then
+            if [ "$DRAFT" = "true" ]; then
+              echo "::error::A draft release for $VERSION exists. Publish or delete it, then run the workflow again."
+              exit 1
+            fi
             echo "Release $VERSION already exists"
             exit 0
           fi
