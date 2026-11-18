@@ -85,6 +85,7 @@ jobs:
         run: |
           PREVIOUS=$(git describe --tags --abbrev=0 "$SHA^" 2>/dev/null || true)
           RANGE=${PREVIOUS:+$PREVIOUS..}$SHA
+          BASE=${PREVIOUS:-$(git hash-object -t tree /dev/null)}
           {
             echo "## Release $VERSION"
             echo
@@ -105,7 +106,8 @@ jobs:
               --jq '[.[] | select(.state == "APPROVED") | .user.login] | unique | join(", ")')
             echo "| ${APPROVERS:-**nobody**} |" >> "$GITHUB_STEP_SUMMARY"
           done
-          SENSITIVE=$(git diff --name-only "$RANGE" -- .github Package.swift Package.resolved gr4vy-swift.xcodeproj scripts update_version.sh)
+          mapfile -t PROTECTED < <(grep -vE '^[[:space:]]*(#|$)' .github/merge-gate-protected.txt)
+          SENSITIVE=$(git diff --name-only "$BASE" "$SHA" -- .github "${PROTECTED[@]/%/*}")
           if [ -n "$SENSITIVE" ]; then
             {
               echo
