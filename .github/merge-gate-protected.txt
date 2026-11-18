@@ -1,8 +1,21 @@
-# Dependencies merchants' apps pull in
+# Dependencies merchants' apps pull in, and what updates them
 Package.swift
 Package.resolved
 gr4vy-swift.xcodeproj/
+renovate.json
 # Decides the version that ships
 update_version.sh
 # Run on developers' machines with live sandbox tokens
 scripts/
+# What CI checks: which tests run, and the lint gate
+gr4vy-swiftTests.xctestplan
+.swiftlint.yml
+gr4vy-swiftTests/.swiftlint.yml
+# Where card data and the token go, and what reaches merchants' logs
+gr4vy-swift/Gr4vyUtility.swift
+gr4vy-swift/Models/Gr4vySetup.swift
+gr4vy-swift/Services/Gr4vyHTTPClient.swift
+gr4vy-swift/Gr4vyLogger.swift
+# 3DS trust: directory-server certificates and which ones sandbox uses
+gr4vy-swift/acq-
+gr4vy-swift/Services/Gr4vyTestCertificateConfiguration.swift
