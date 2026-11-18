@@ -14,5 +14,6 @@ Decisions that are hard to reverse, would surprise a new reader, and came out of
 | 2026-10-08 | [0001](0001-preferred-scheme-per-call-unvalidated.md): Preferred scheme is a per-call `tokenize` argument, and the SDK doesn't validate it |
 | 2026-10-08 | [0002](0002-preferred-scheme-query-key.md): The preferred scheme is sent as the `preferredScheme` query key |
 | 2026-10-19 | [0003](0003-swiftlint-gates-on-errors-only.md): SwiftLint gates CI on errors only |
+| 2026-11-18 | [0011](0011-releases-from-a-manual-workflow.md): Releases run from a manual workflow, and only its approved job creates tags |
 
 New ADRs: next free number, `status` and `date` frontmatter, and the format in the existing files. No customer names or internal links: this repo is public.

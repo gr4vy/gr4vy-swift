@@ -1,0 +1,8 @@
+# Dependencies merchants' apps pull in
+Package.swift
+Package.resolved
+gr4vy-swift.xcodeproj/
+# Decides the version that ships
+update_version.sh
+# Run on developers' machines with live sandbox tokens
+scripts/
