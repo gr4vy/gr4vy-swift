@@ -729,9 +729,7 @@ let gr4vy = try Gr4vy(
 
 ### Debug Mode
 
-You can setup your SDK to emit debug logs for SDK requests and responses.
-
-For request and response logging, enable `debugMode` when initializing the SDK:
+You can set up the SDK to log each request it makes. To turn it on, enable `debugMode` when initializing the SDK:
 
 ```swift
 let gr4vy = try Gr4vy(
@@ -751,14 +749,21 @@ Gr4vyLogger.enable()  // Enable logging
 Gr4vyLogger.disable() // Disable logging
 ```
 
+Debug mode logs each request's method and URL, the response status and time, a short summary of Gr4vy's error response (code, message, and which field it's about), and the 3DS steps. The SDK doesn't log request or response bodies or headers. One exception: if an error response isn't JSON, its body becomes the error's message, which is logged. `debugMode` also turns on the 3DS SDK's own debug logging.
+
 Example output:
 ```
-[Gr4vy SDK] Network request: GET https://api.sandbox.example.gr4vy.app/payment-options
-[Gr4vy SDK] Response: 200 OK
-[Gr4vy SDK] Response time: 245ms
+🌐 [Gr4vy] PUT https://api.sandbox.example.gr4vy.app/checkout/sessions/{id}/fields
+🌐 [Gr4vy] 204 https://api.sandbox.example.gr4vy.app/checkout/sessions/{id}/fields (0.41s)
+🌐 [Gr4vy] GET https://api.sandbox.example.gr4vy.app/checkout/sessions/{id}/three-d-secure-version?preferredScheme=foo
+❌ [Gr4vy] 400 https://api.sandbox.example.gr4vy.app/checkout/sessions/{id}/three-d-secure-version?preferredScheme=foo (0.40s)
+🔍 [Gr4vy] Debug:
+bad_request: Request failed validation (query preferredScheme: Input should be ...)
+❌ [Gr4vy] Network Request failed: API request failed with status 400: Request failed validation
+❌ [Gr4vy] Versioning failed: API request failed with status 400: Request failed validation
 ```
 
-**WARNING**: This should only be used for temporary debugging purposes. Leaving this option on in a production system could expose credentials/secrets in logs. Authorization headers are automatically redacted.
+**WARNING**: Use this only for temporary debugging. URLs, including their query values, are still logged, so don't leave it on in production.
 <!-- End Debugging [debug] -->
 
 ## Support

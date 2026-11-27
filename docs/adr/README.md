@@ -16,5 +16,6 @@ Decisions that are hard to reverse, would surprise a new reader, and came out of
 | 2026-10-19 | [0003](0003-swiftlint-gates-on-errors-only.md): SwiftLint gates CI on errors only |
 | 2026-11-18 | [0011](0011-releases-from-a-manual-workflow.md): Releases start after a version bump and wait for approval, and only the approved job creates tags |
 | 2026-11-18 | [0012](0012-merge-gate-leaves-trust-boundaries-to-a-person.md): The merge gate approves SDK feature code, and a person reviews the trust boundaries |
+| 2026-11-27 | [0013](0013-debug-mode-logs-no-bodies.md): Debug mode logs no request or response bodies |
 
 New ADRs: next free number, `status` and `date` frontmatter, and the format in the existing files. No customer names or internal links: this repo is public.

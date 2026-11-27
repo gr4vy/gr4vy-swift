@@ -1216,4 +1216,72 @@ class Gr4vyHTTPClientTests: XCTestCase {
             )
         }
     }
+
+    // MARK: - Debug Logging
+
+    /// Runs `body` with the logger on and returns every line it printed.
+    private func capturingLogs(_ body: () async throws -> Void) async rethrows -> [String] {
+        var lines: [String] = []
+        let previousOutput = Gr4vyLogger.output
+        Gr4vyLogger.output = { lines.append($0) }
+        Gr4vyLogger.enable()
+        defer {
+            Gr4vyLogger.output = previousOutput
+            Gr4vyLogger.disable()
+        }
+        try await body()
+        return lines
+    }
+
+    func testDebugModeDoesNotLogRequestOrResponseBodies() async throws {
+        let url = try XCTUnwrap(URL(string: "https://api.sandbox.test-id.gr4vy.app/checkout/sessions/abc/fields"))
+        mockSession.mockData = Data("""
+        {"indicator":"CHALLENGE","sdk_encrypted_data":"eyJhbGciOiJSU0EifQ.device","challenge":{"acs_signed_content":"eyJhbGciOiJQUzI1NiJ9.acs"}}
+        """.utf8)
+        mockSession.mockResponse = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)
+
+        struct CardBody: Encodable {
+            let number: String
+            let securityCode: String
+
+            enum CodingKeys: String, CodingKey {
+                case number
+                case securityCode = "security_code"
+            }
+        }
+
+        let lines = try await capturingLogs {
+            _ = try await httpClient.perform(
+                to: url,
+                method: "PUT",
+                body: CardBody(number: "4111 1111 1111 1111", securityCode: "123"),
+                merchantId: nil
+            )
+        }
+        let log = lines.joined(separator: "\n")
+
+        XCTAssertTrue(log.contains("PUT \(url.absoluteString)"))
+        XCTAssertTrue(log.contains("200 \(url.absoluteString)"))
+        for leaked in ["4111", "security_code", "sdk_encrypted_data", "acs_signed_content", "eyJ", "test-token"] {
+            XCTAssertFalse(log.contains(leaked), "Debug log contains \(leaked)")
+        }
+    }
+
+    func testDebugModeLogsOnlyTheErrorEnvelopeSummary() async throws {
+        let url = try XCTUnwrap(URL(string: "https://api.sandbox.test-id.gr4vy.app/checkout/sessions/abc/three-d-secure-version"))
+        mockSession.mockData = Data("""
+        {"type":"error","code":"bad_request","status":400,"message":"Request failed validation",\
+        "details":[{"location":"query","pointer":"preferredScheme","message":"Input should be a known scheme","input":"echoed-input"}]}
+        """.utf8)
+        mockSession.mockResponse = HTTPURLResponse(url: url, statusCode: 400, httpVersion: nil, headerFields: nil)
+
+        let lines = await capturingLogs {
+            _ = try? await httpClient.perform(to: url, method: "GET", body: nil as String?, merchantId: nil)
+        }
+        let log = lines.joined(separator: "\n")
+
+        XCTAssertTrue(log.contains("bad_request: Request failed validation (query preferredScheme: Input should be a known scheme)"))
+        XCTAssertFalse(log.contains("echoed-input"))
+        XCTAssertFalse(log.contains("\"details\""))
+    }
 }

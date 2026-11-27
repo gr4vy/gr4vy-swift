@@ -155,9 +155,6 @@ public final class Gr4vyHTTPClient: Gr4vyHTTPClientProtocol {
     private func performRequest(_ request: URLRequest) async throws -> Data {
         // Log request
         Gr4vyLogger.network("\(request.httpMethod ?? "GET") \(request.url?.absoluteString ?? "")")
-        if configuration.debugMode, let body = request.httpBody {
-            Gr4vyLogger.debug(body)
-        }
 
         let startTime = Date()
 
@@ -196,8 +193,8 @@ public final class Gr4vyHTTPClient: Gr4vyHTTPClientProtocol {
         guard (200...299).contains(httpResponse.statusCode) else {
             // Log error response
             Gr4vyLogger.error("\(httpResponse.statusCode) \(urlString) (\(responseTimeString)s)")
-            if configuration.debugMode {
-                Gr4vyLogger.debug(data)
+            if configuration.debugMode, let summary = errorSummary(from: data) {
+                Gr4vyLogger.debug(summary)
             }
 
             let errorMessage = extractErrorMessage(from: data)
@@ -210,9 +207,23 @@ public final class Gr4vyHTTPClient: Gr4vyHTTPClientProtocol {
 
         // Log successful response
         Gr4vyLogger.network("\(httpResponse.statusCode) \(urlString) (\(responseTimeString)s)")
-        if configuration.debugMode {
-            Gr4vyLogger.debug(data)
+    }
+
+    /// The fields of Gr4vy's error envelope that are safe to log: code, message, and where each
+    /// detail points. Never the raw body, which can echo request data.
+    private func errorSummary(from data: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
         }
+        var summary = [json["code"], json["message"]].compactMap { $0 as? String }.joined(separator: ": ")
+        let details = (json["details"] as? [[String: Any]] ?? []).map { detail in
+            let place = [detail["location"], detail["pointer"]].compactMap { $0 as? String }.joined(separator: " ")
+            return [place, detail["message"] as? String].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ": ")
+        }
+        if !details.isEmpty {
+            summary += " (\(details.joined(separator: "; ")))"
+        }
+        return summary.isEmpty ? nil : summary
     }
 
     private func extractErrorMessage(from data: Data) -> String? {
