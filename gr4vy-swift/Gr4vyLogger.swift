@@ -11,6 +11,9 @@ public struct Gr4vyLogger {
     // MARK: - Properties
     private static var isEnabled = false
 
+    /// Where log lines go. Tests replace it to capture them.
+    static var output: (String) -> Void = { print($0) }
+
     // MARK: - Configuration
     
     public static func enable() {
@@ -27,40 +30,40 @@ public struct Gr4vyLogger {
         guard isEnabled else {
             return
         }
-        print("🔍 [Gr4vy] \(maskSensitiveInfo(message))")
+        output("🔍 [Gr4vy] \(maskSensitiveInfo(message))")
     }
     
     public static func error(_ message: String) {
         guard isEnabled else {
             return
         }
-        print("❌ [Gr4vy] \(maskSensitiveInfo(message))")
+        output("❌ [Gr4vy] \(maskSensitiveInfo(message))")
     }
     
     public static func network(_ message: String) {
         guard isEnabled else {
             return
         }
-        print("🌐 [Gr4vy] \(maskSensitiveInfo(message))")
+        output("🌐 [Gr4vy] \(maskSensitiveInfo(message))")
     }
     
     public static func debug(_ object: Any) {
         guard isEnabled else {
             return
         }
-        print("🔍 [Gr4vy] Debug:")
+        output("🔍 [Gr4vy] Debug:")
 
         // Handle Data objects specially to avoid logging sensitive request bodies
         if let data = object as? Data {
             if let jsonString = String(data: data, encoding: .utf8) {
                 let maskedJson = maskSensitiveInfo(jsonString)
-                print(maskedJson)
+                output(maskedJson)
             } else {
-                print("Binary data (\(data.count) bytes)")
+                output("Binary data (\(data.count) bytes)")
             }
         } else {
             let objectString = String(describing: object)
-            print(maskSensitiveInfo(objectString))
+            output(maskSensitiveInfo(objectString))
         }
     }
 
