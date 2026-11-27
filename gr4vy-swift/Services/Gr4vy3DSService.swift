@@ -77,6 +77,8 @@ final class Gr4vy3DSService {
             session: configuration.session
         )
         self.server = newSetup.server
+        // Every 3DS request goes through the checkout session service, so it must get the new setup too
+        checkoutSessionService.updateSetup(newSetup)
     }
     
     // MARK: - Private Helper Methods

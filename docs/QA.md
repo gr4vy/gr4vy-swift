@@ -7,7 +7,7 @@ Run it for every PR that changes request building, 3DS, tokenization, or the pub
 ## What makes a good QA run
 
 1. **Probe the server first.** Before you open the simulator, call the endpoint the SDK will call with `scripts/qa/probe-versioning.sh` and write down what the server returns for each input. If you skip this, a green SDK run can hide a contract mismatch. The 1.3.0 run found that the server ignores `preferred_scheme` this way. The SDK tests passed because they mock the server with the SDK's own assumption.
-2. **Run the real client app, not a test harness.** Build [gr4vy-swift-client-app](https://github.com/gr4vy/gr4vy-swift-client-app) against the PR branch and drive it in the simulator. The 3DS challenge UI, view controller lookup and Netcetera SDK only show up here.
+2. **Run the real client app, not a test harness.** Build [gr4vy-swift-client-app](https://github.com/gr4vy/gr4vy-swift-client-app) (or [gr4vy-uikit-client-app](https://github.com/gr4vy/gr4vy-uikit-client-app)) against the PR branch and drive it in the simulator. The 3DS challenge UI, view controller lookup and Netcetera SDK only show up here.
 3. **Check the wire, not just the result screen.** The client app runs with `debugMode: true`. Capture the console and confirm the exact request (path, query, status) for every case. "attempted: true" on screen doesn't tell you which parameter was sent.
 4. **Cover every outcome of `tokenize`.** Each run hits all rows of the [standard matrix](#standard-matrix), even when the change looks unrelated to some of them.
 5. **Test the new input four ways:** absent, empty, a valid value, and an invalid value. Then test the exact example value from the README and doc comments, copied verbatim.
@@ -22,8 +22,8 @@ Run it for every PR that changes request building, 3DS, tokenization, or the pub
   gr4vy merchant-accounts three-ds-configuration list default
   ```
   On 2026-11-17 it was visa/GBP, mastercard/AUD and amex/USD. A Visa card in EUR therefore returns 204, which makes it the easy way to test the "not set up for 3DS" path.
-- **Client app.** Clone `gr4vy/gr4vy-swift-client-app`, point the `gr4vy-swift` package at the PR branch (`branch = "<pr-branch>";` in `project.pbxproj`, then delete `Package.resolved`), and add any new parameter to the Tokenize screen.
-- **Settings.** `scripts/qa/ios-seed.sh` creates a fresh checkout session and writes the token, Gr4vy ID, session and card into the app's settings (`simctl defaults`). It then relaunches the app with the console captured to the file you name in `QA_LOG`. It never prints the token.
+- **Client app.** Clone `gr4vy/gr4vy-swift-client-app` (SwiftUI) or `gr4vy/gr4vy-uikit-client-app` (UIKit), point the `gr4vy-swift` package at the PR branch (`branch = "<pr-branch>";` in `project.pbxproj`, then delete `Package.resolved`), and add any new parameter to the Tokenize screen. Both apps call the SDK the same way and have the same Tokenize fields, so either works.
+- **Settings.** `scripts/qa/ios-seed.sh` creates a fresh checkout session and writes the token, Gr4vy ID, session and card into the app's settings (`simctl defaults`). It then relaunches the app with the console captured to the file you name in `QA_LOG`. It never prints the token. It seeds the SwiftUI app by default; put `APP=uikit` in front for the UIKit app, which reads the same settings keys.
 
 ## Standard matrix
 
@@ -53,3 +53,5 @@ Add feature rows on top of this. For a new request parameter, that means absent,
 - The first tap after a relaunch is often swallowed while the app is still launching. Take a screenshot before you assume a tap landed.
 - `Package.resolved` pins `main`. Delete it, or the app builds against the old SDK. The build log names the resolved revision (`gr4vy-swift @ <branch> (<sha>)`), so check it.
 - Netcetera's demo ACS returns `N` for the "cities" question unless you pick the right cities. `N` still proves the challenge flow works end to end.
+- A seeded checkout session expires after about an hour, after which `PUT …/fields` returns 404. Tap PUT soon after seeding, or seed again.
+- The simulator uses the Mac's proxy settings. If every request fails with `-1200` ("A TLS error caused the secure connection to fail"), a debugging proxy such as Proxyman is probably still set as the Mac's proxy. `scutil --proxy` shows it.

@@ -154,9 +154,65 @@ final class Gr4vy3DSServiceTests: XCTestCase {
         )
         
         let service = Gr4vy3DSService(setup: sandboxSetup)
-        
+
         // When & Then
         XCTAssertNoThrow(service.updateSetup(productionSetup))
+    }
+
+    func testUpdateSetupAppliesToTokenizeRequests() async throws {
+        // Given - every request gets 204 No Content, so the 3DS flow stops after the versioning GET
+        let session = MockURLSession()
+        session.mockData = Data()
+        session.mockResponse = try XCTUnwrap(
+            HTTPURLResponse(
+                url: try XCTUnwrap(URL(string: "https://api.sandbox.test-id.gr4vy.app")),
+                statusCode: 204,
+                httpVersion: nil,
+                headerFields: nil
+            )
+        )
+        let service = Gr4vy3DSService(setup: testSetup, session: session)
+        let cardData = Gr4vyCardData(paymentMethod: .card(CardPaymentMethod(
+            number: "4111111111111111",
+            expirationDate: "12/25",
+            securityCode: "123"
+        )))
+
+        // When
+        service.updateSetup(Gr4vySetup(
+            gr4vyId: "updated-id",
+            token: "updated-token",
+            merchantId: "updated-merchant-456",
+            server: .production,
+            timeout: 60.0
+        ))
+
+        // Then - card tokenization (PUT /fields) uses the new setup
+        _ = try await service.tokenize(
+            checkoutSessionId: "checkout_session_updated",
+            cardData: cardData,
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: false
+        )
+        let fieldsRequest = try XCTUnwrap(session.lastRequest)
+        XCTAssertEqual(fieldsRequest.httpMethod, "PUT")
+        XCTAssertEqual(fieldsRequest.url?.host, "api.updated-id.gr4vy.app")
+        XCTAssertEqual(fieldsRequest.value(forHTTPHeaderField: "Authorization"), "Bearer updated-token")
+
+        // Then - so does the 3DS versioning request
+        _ = try await service.tokenize(
+            checkoutSessionId: "checkout_session_updated",
+            cardData: cardData,
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true
+        )
+        let versioningRequest = try XCTUnwrap(session.lastRequest)
+        XCTAssertEqual(versioningRequest.httpMethod, "GET")
+        XCTAssertEqual(versioningRequest.url?.host, "api.updated-id.gr4vy.app")
+        XCTAssertEqual(versioningRequest.value(forHTTPHeaderField: "Authorization"), "Bearer updated-token")
+        XCTAssertEqual(versioningRequest.timeoutInterval, 60.0)
     }
     
     // MARK: - Tokenize Without Authentication Tests

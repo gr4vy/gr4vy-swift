@@ -272,6 +272,40 @@ final class Gr4vyTests: XCTestCase {
         XCTAssertEqual(gr4vy.setup?.merchantId, originalMerchantId)
     }
 
+    func testUpdateTokenAppliesToThreeDSTokenize() async throws {
+        // Given - every request (PUT /fields, then the 3DS versioning GET) gets 204 No Content
+        let session = MockURLSession()
+        session.mockData = Data()
+        session.mockResponse = try XCTUnwrap(
+            HTTPURLResponse(
+                url: try XCTUnwrap(URL(string: "https://api.sandbox.test.gr4vy.app")),
+                statusCode: 204,
+                httpVersion: nil,
+                headerFields: nil
+            )
+        )
+        let gr4vy = try Gr4vy(gr4vyId: "test", token: "initial_token", merchantId: "test_merchant", server: .sandbox, session: session)
+        let cardData = Gr4vyCardData(paymentMethod: .card(.init(
+            number: "4111111111111111",
+            expirationDate: "12/25",
+            securityCode: "123"
+        )))
+
+        // When
+        gr4vy.updateToken("updated_token_123")
+        _ = try await gr4vy.tokenize(
+            checkoutSessionId: "session_update_token",
+            cardData: cardData,
+            viewController: UIViewController(),
+            sdkMaxTimeoutMinutes: 5,
+            authenticate: true
+        )
+
+        // Then - the 3DS versioning request uses the new token
+        XCTAssertTrue(session.lastRequest?.url?.path.hasSuffix("/three-d-secure-version") ?? false)
+        XCTAssertEqual(session.lastRequest?.value(forHTTPHeaderField: "Authorization"), "Bearer updated_token_123")
+    }
+
     // MARK: - MerchantId Update Tests
 
     func testUpdateMerchantIdWithValidMerchantId() throws {
